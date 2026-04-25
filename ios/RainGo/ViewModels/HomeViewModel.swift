@@ -1,5 +1,6 @@
 import Foundation
 import CoreLocation
+import UIKit
 
 @MainActor
 final class HomeViewModel: NSObject, ObservableObject {
@@ -24,21 +25,40 @@ final class HomeViewModel: NSObject, ObservableObject {
 
         do {
             let location = try await requestLocation()
-            decision = try await APIService.shared.fetchDecision(
+            let result = try await APIService.shared.fetchDecision(
                 lat: location.coordinate.latitude,
                 lng: location.coordinate.longitude
             )
+            decision = result
+            triggerHaptic(for: result.state)
         } catch let err as CLError where err.code == .denied {
             locationDenied = true
         } catch {
             errorMessage = error.localizedDescription
+            UINotificationFeedbackGenerator().notificationOccurred(.error)
         }
 
         isLoading = false
     }
 
+    // MARK: - Haptics
+
+    private func triggerHaptic(for state: String) {
+        switch state {
+        case "GO":
+            UINotificationFeedbackGenerator().notificationOccurred(.success)
+        case "WAIT":
+            UIImpactFeedbackGenerator(style: .medium).impactOccurred()
+        case "DELAY":
+            UINotificationFeedbackGenerator().notificationOccurred(.warning)
+        default:
+            break
+        }
+    }
+
+    // MARK: - Location
+
     private func requestLocation() async throws -> CLLocation {
-        // Return cached location immediately if fresh enough
         if let loc = locationManager.location, -loc.timestamp.timeIntervalSinceNow < 60 {
             return loc
         }
@@ -60,7 +80,8 @@ final class HomeViewModel: NSObject, ObservableObject {
 
 extension HomeViewModel: CLLocationManagerDelegate {
     func locationManagerDidChangeAuthorization(_ manager: CLLocationManager) {
-        if manager.authorizationStatus == .authorizedWhenInUse {
+        if manager.authorizationStatus == .authorizedWhenInUse
+            || manager.authorizationStatus == .authorizedAlways {
             manager.requestLocation()
         } else if manager.authorizationStatus == .denied
                     || manager.authorizationStatus == .restricted {

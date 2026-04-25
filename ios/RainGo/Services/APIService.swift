@@ -15,10 +15,7 @@ enum APIError: LocalizedError {
 final class APIService {
     static let shared = APIService()
 
-    // Change to your deployed URL for production
-    private let baseURL: String = {
-        ProcessInfo.processInfo.environment["RAINGO_API_URL"] ?? "http://localhost:3000"
-    }()
+    private let baseURL = Config.apiURL
 
     func fetchDecision(lat: Double, lng: Double) async throws -> DecisionResponse {
         guard let url = URL(string: "\(baseURL)/decision") else {

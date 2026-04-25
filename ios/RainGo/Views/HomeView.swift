@@ -1,95 +1,230 @@
 import SwiftUI
 
+// MARK: - Root view
+
 struct HomeView: View {
     @StateObject private var vm = HomeViewModel()
 
     var body: some View {
         ZStack {
-            background.ignoresSafeArea()
+            backgroundGradient.ignoresSafeArea()
 
-            // Pulse rings behind content for WAIT / DELAY states
-            if let state = vm.decision.flatMap({ RainState($0.state) }), state != .go {
-                PulseRings()
+            if let rainState = vm.decision.flatMap({ RainState($0.state) }),
+               rainState != .go {
+                PulseRings(color: pulseColor(for: rainState))
             }
 
             VStack(spacing: 0) {
                 Spacer()
                 content
+                    .transition(.opacity.combined(with: .scale(scale: 0.97)))
                 Spacer()
-                footer
+                bottomBar
                     .padding(.bottom, 52)
             }
         }
+        .animation(.easeInOut(duration: 0.45), value: vm.decision?.state)
         .task { await vm.fetchDecision() }
-        .animation(.easeInOut(duration: 0.5), value: vm.decision?.state)
     }
 
-    // MARK: - Content
+    // MARK: - Content switcher
 
     @ViewBuilder
     private var content: some View {
         if vm.isLoading {
-            loadingView
+            LoadingView()
         } else if vm.locationDenied {
-            locationDeniedView
-        } else if let decision = vm.decision {
-            decisionView(decision)
-        } else if let error = vm.errorMessage {
-            errorView(error)
-        } else {
-            EmptyView()
+            LocationDeniedView()
+        } else if let d = vm.decision {
+            DecisionView(decision: d)
+        } else if let err = vm.errorMessage {
+            ErrorStateView(message: err)
         }
     }
 
-    private var loadingView: some View {
-        VStack(spacing: 20) {
+    // MARK: - Bottom bar
+
+    private var bottomBar: some View {
+        VStack(spacing: 10) {
+            if let age = vm.decision?.dataAgeSeconds {
+                Text(ageLabel(age))
+                    .font(.caption)
+                    .foregroundColor(.white.opacity(0.45))
+            }
+
+            Button {
+                Task { await vm.fetchDecision() }
+            } label: {
+                HStack(spacing: 8) {
+                    if vm.isLoading {
+                        ProgressView().tint(.white).scaleEffect(0.8)
+                    } else {
+                        Image(systemName: "arrow.clockwise")
+                    }
+                    Text(vm.isLoading ? "Checking…" : "Check again")
+                        .fontWeight(.semibold)
+                }
+                .font(.system(size: 17))
+                .foregroundColor(.white)
+                .frame(maxWidth: .infinity)
+                .padding(.vertical, 18)
+                .background(.ultraThinMaterial, in: RoundedRectangle(cornerRadius: 16))
+                .overlay(
+                    RoundedRectangle(cornerRadius: 16)
+                        .stroke(Color.white.opacity(0.2), lineWidth: 1)
+                )
+            }
+            .disabled(vm.isLoading)
+            .padding(.horizontal, 32)
+        }
+    }
+
+    // MARK: - Gradient
+
+    private var backgroundGradient: LinearGradient {
+        let colors = gradientColors(for: vm.decision.flatMap { RainState($0.state) })
+        return LinearGradient(colors: colors, startPoint: .topLeading, endPoint: .bottomTrailing)
+    }
+
+    private func gradientColors(for state: RainState?) -> [Color] {
+        switch state {
+        case .go:    return [Color(hex: "0D9E5A"), Color(hex: "0A7A44")]
+        case .wait:  return [Color(hex: "E8920A"), Color(hex: "C47208")]
+        case .delay: return [Color(hex: "D42B2B"), Color(hex: "A01F1F")]
+        default:     return [Color(hex: "1C1C2E"), Color(hex: "111120")]
+        }
+    }
+
+    private func pulseColor(for state: RainState) -> Color {
+        state == .delay ? Color(hex: "FF6B6B") : Color(hex: "FFB84D")
+    }
+
+    private func ageLabel(_ seconds: Int) -> String {
+        seconds < 60 ? "Radar updated just now" : "Radar updated \(seconds / 60) min ago"
+    }
+}
+
+// MARK: - Loading
+
+private struct LoadingView: View {
+    var body: some View {
+        VStack(spacing: 18) {
             ProgressView()
                 .progressViewStyle(CircularProgressViewStyle(tint: .white))
-                .scaleEffect(1.8)
+                .scaleEffect(1.6)
             Text("Checking rain radar…")
                 .font(.title3)
-                .foregroundColor(.white.opacity(0.8))
+                .foregroundColor(.white.opacity(0.75))
         }
     }
+}
 
-    private func decisionView(_ d: DecisionResponse) -> some View {
-        VStack(spacing: 28) {
-            Text(headline(for: d))
-                .font(.system(size: 44, weight: .bold, design: .rounded))
+// MARK: - Decision card
+
+private struct DecisionView: View {
+    let decision: DecisionResponse
+
+    var body: some View {
+        VStack(spacing: 32) {
+            // Icon
+            Image(systemName: iconName)
+                .font(.system(size: 64, weight: .light))
+                .foregroundColor(.white.opacity(0.9))
+                .shadow(color: .black.opacity(0.2), radius: 8, x: 0, y: 4)
+
+            // Headline
+            Text(headline)
+                .font(.system(size: 46, weight: .bold, design: .rounded))
                 .foregroundColor(.white)
                 .multilineTextAlignment(.center)
-                .minimumScaleFactor(0.65)
-                .padding(.horizontal, 32)
+                .minimumScaleFactor(0.6)
+                .shadow(color: .black.opacity(0.15), radius: 4, x: 0, y: 2)
+                .padding(.horizontal, 28)
 
-            Text(d.message)
-                .font(.title3)
-                .foregroundColor(.white.opacity(0.85))
+            // Subtext
+            Text(decision.message)
+                .font(.system(size: 17, weight: .regular))
+                .foregroundColor(.white.opacity(0.8))
                 .multilineTextAlignment(.center)
                 .padding(.horizontal, 40)
 
+            // Confidence pill
             HStack(spacing: 6) {
-                Image(systemName: "checkmark.circle.fill")
-                    .font(.callout)
-                Text("\(d.confidence)% confidence")
-                    .font(.callout)
+                Circle()
+                    .fill(confidenceColor)
+                    .frame(width: 7, height: 7)
+                Text("\(decision.confidence)% confidence")
+                    .font(.system(size: 13, weight: .medium))
             }
-            .foregroundColor(.white.opacity(0.65))
+            .foregroundColor(.white.opacity(0.6))
+            .padding(.horizontal, 14)
+            .padding(.vertical, 6)
+            .background(Color.white.opacity(0.12), in: Capsule())
         }
     }
 
-    private var locationDeniedView: some View {
-        VStack(spacing: 20) {
-            Image(systemName: "location.slash.fill")
-                .font(.system(size: 48))
-                .foregroundColor(.white.opacity(0.8))
-            Text("Location access needed")
+    private var iconName: String {
+        switch RainState(decision.state) {
+        case .go:    return "sun.max.fill"
+        case .wait:  return "cloud.drizzle.fill"
+        case .delay: return "cloud.bolt.rain.fill"
+        default:     return "questionmark.circle"
+        }
+    }
+
+    private var headline: String {
+        switch RainState(decision.state) {
+        case .go:    return "Safe to go now"
+        case .wait:  return "Wait \(decision.minutes) minutes"
+        case .delay: return decision.minutes == 0 ? "It's raining now" : "Rain in \(decision.minutes) min"
+        default:     return "—"
+        }
+    }
+
+    private var confidenceColor: Color {
+        decision.confidence >= 80 ? Color(hex: "7AE28C") : Color(hex: "FFD166")
+    }
+}
+
+// MARK: - Error states
+
+private struct ErrorStateView: View {
+    let message: String
+
+    var body: some View {
+        VStack(spacing: 16) {
+            Image(systemName: "exclamationmark.triangle.fill")
+                .font(.system(size: 52))
+                .foregroundColor(.white.opacity(0.75))
+            Text("Something went wrong")
                 .font(.title2.bold())
                 .foregroundColor(.white)
-            Text("Enable location in Settings so RainGo can check rain at your position.")
+            Text(message)
                 .font(.body)
-                .foregroundColor(.white.opacity(0.75))
+                .foregroundColor(.white.opacity(0.7))
                 .multilineTextAlignment(.center)
                 .padding(.horizontal, 40)
+        }
+    }
+}
+
+private struct LocationDeniedView: View {
+    var body: some View {
+        VStack(spacing: 20) {
+            Image(systemName: "location.slash.fill")
+                .font(.system(size: 52))
+                .foregroundColor(.white.opacity(0.8))
+
+            Text("Location needed")
+                .font(.title2.bold())
+                .foregroundColor(.white)
+
+            Text("RainGo needs your location to check for rain at your position.")
+                .font(.body)
+                .foregroundColor(.white.opacity(0.72))
+                .multilineTextAlignment(.center)
+                .padding(.horizontal, 40)
+
             Button("Open Settings") {
                 if let url = URL(string: UIApplication.openSettingsURLString) {
                     UIApplication.shared.open(url)
@@ -97,99 +232,58 @@ struct HomeView: View {
             }
             .font(.system(size: 16, weight: .semibold))
             .foregroundColor(.white)
-            .padding(.horizontal, 32)
-            .padding(.vertical, 12)
-            .background(Color.white.opacity(0.22))
-            .cornerRadius(12)
+            .padding(.horizontal, 28)
+            .padding(.vertical, 13)
+            .background(Color.white.opacity(0.2), in: Capsule())
+            .overlay(Capsule().stroke(Color.white.opacity(0.25), lineWidth: 1))
         }
-    }
-
-    private func errorView(_ message: String) -> some View {
-        VStack(spacing: 16) {
-            Image(systemName: "exclamationmark.triangle.fill")
-                .font(.system(size: 48))
-                .foregroundColor(.white.opacity(0.8))
-            Text(message)
-                .font(.body)
-                .foregroundColor(.white.opacity(0.85))
-                .multilineTextAlignment(.center)
-                .padding(.horizontal, 40)
-        }
-    }
-
-    // MARK: - Footer (data age + refresh button)
-
-    private var footer: some View {
-        VStack(spacing: 12) {
-            if let age = vm.decision?.dataAgeSeconds, age >= 0 {
-                Text(dataAgeLabel(age))
-                    .font(.caption)
-                    .foregroundColor(.white.opacity(0.5))
-            }
-
-            Button {
-                Task { await vm.fetchDecision() }
-            } label: {
-                Text("Check again")
-                    .font(.system(size: 18, weight: .semibold))
-                    .foregroundColor(.white)
-                    .frame(maxWidth: .infinity)
-                    .padding(.vertical, 18)
-                    .background(Color.white.opacity(0.22))
-                    .cornerRadius(16)
-            }
-            .disabled(vm.isLoading)
-            .padding(.horizontal, 32)
-        }
-    }
-
-    // MARK: - Helpers
-
-    private var background: Color {
-        switch vm.decision.flatMap({ RainState($0.state) }) {
-        case .go:    return Color(red: 0.10, green: 0.68, blue: 0.40)
-        case .wait:  return Color(red: 0.90, green: 0.58, blue: 0.08)
-        case .delay: return Color(red: 0.85, green: 0.18, blue: 0.18)
-        default:     return Color(red: 0.13, green: 0.13, blue: 0.20)
-        }
-    }
-
-    private func headline(for d: DecisionResponse) -> String {
-        switch RainState(d.state) {
-        case .go:    return "Safe to go now"
-        case .wait:  return "Wait \(d.minutes) minutes"
-        case .delay:
-            return d.minutes == 0 ? "It's raining now" : "Heavy rain in \(d.minutes) min"
-        default:     return "—"
-        }
-    }
-
-    private func dataAgeLabel(_ seconds: Int) -> String {
-        if seconds < 60  { return "Updated just now" }
-        let minutes = seconds / 60
-        return "Updated \(minutes) min ago"
     }
 }
 
-// MARK: - Pulse animation
+// MARK: - Pulse rings
 
 private struct PulseRings: View {
-    @State private var scale: CGFloat = 0.6
-    @State private var opacity: Double = 0.4
+    let color: Color
+    @State private var scale: CGFloat = 0.55
+    @State private var opacity: Double = 0.35
 
     var body: some View {
+        ZStack {
+            ring(delay: 0)
+            ring(delay: 0.8)
+        }
+    }
+
+    private func ring(delay: Double) -> some View {
         Circle()
-            .fill(Color.white.opacity(opacity))
+            .stroke(color, lineWidth: 1.5)
+            .frame(width: 300, height: 300)
             .scaleEffect(scale)
-            .frame(width: 320, height: 320)
+            .opacity(opacity)
             .onAppear {
                 withAnimation(
-                    .easeInOut(duration: 2.0).repeatForever(autoreverses: true)
+                    .easeOut(duration: 2.4)
+                    .repeatForever(autoreverses: false)
+                    .delay(delay)
                 ) {
-                    scale = 1.15
-                    opacity = 0.0
+                    scale = 1.5
+                    opacity = 0
                 }
             }
+    }
+}
+
+// MARK: - Hex color helper
+
+extension Color {
+    init(hex: String) {
+        let hex = hex.trimmingCharacters(in: CharacterSet.alphanumerics.inverted)
+        var int: UInt64 = 0
+        Scanner(string: hex).scanHexInt64(&int)
+        let r = Double((int >> 16) & 0xFF) / 255
+        let g = Double((int >> 8)  & 0xFF) / 255
+        let b = Double(int         & 0xFF) / 255
+        self.init(red: r, green: g, blue: b)
     }
 }
 
