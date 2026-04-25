@@ -63,26 +63,19 @@ function latestRadarUrl() {
  * Skips cells below INTENSITY_THRESHOLD to keep the array small.
  */
 function parsePngBuffer(buffer) {
-  // Minimal PNG decoder: locate IDAT chunk, decompress with zlib, read pixels.
-  // We use the built-in `png-js` approach via raw Buffer — but since we have no
-  // native PNG lib in this minimal setup, we use a 1-pixel-per-station sampling
-  // approach: extract only pixels that map to known station positions.
-  //
-  // For the real implementation, install `pngjs` (pure JS, no native deps):
-  //   npm install pngjs
-  // Then uncomment the block below and remove the placeholder return.
-
-  /*
   const { PNG } = require('pngjs');
   const png = PNG.sync.read(buffer);
   const cells = [];
   const { latMin, latMax, lngMin, lngMax, widthPx, heightPx } = RADAR_BOUNDS;
 
-  for (let py = 0; py < heightPx; py++) {
-    for (let px = 0; px < widthPx; px++) {
+  // Sample every 2nd pixel (240×240) — reduces array to ~14k cells while
+  // keeping spatial resolution at ~920m, well within storm-scale accuracy.
+  const STEP = 2;
+  for (let py = 0; py < heightPx; py += STEP) {
+    for (let px = 0; px < widthPx; px += STEP) {
       const idx = (py * widthPx + px) * 4;
-      const intensity = png.data[idx + 1]; // green channel
-      if (intensity < 10) continue; // skip dry pixels
+      const intensity = png.data[idx + 1]; // green channel encodes dBZ
+      if (intensity < 10) continue;        // skip essentially-dry pixels
 
       const lat = latMax - (py / heightPx) * (latMax - latMin);
       const lng = lngMin + (px / widthPx) * (lngMax - lngMin);
@@ -90,18 +83,12 @@ function parsePngBuffer(buffer) {
     }
   }
   return cells;
-  */
-
-  // Placeholder: signal that PNG was fetched but pngjs is not installed
-  return null;
 }
 
 async function fetchFromRadarPng() {
   const url = latestRadarUrl();
   const res = await axios.get(url, { responseType: 'arraybuffer', timeout: 8000 });
   const cells = parsePngBuffer(Buffer.from(res.data));
-  if (!cells) return null; // pngjs not installed — fall through to station API
-
   return { timestamp: new Date().toISOString(), source: 'nea-radar-png', cells };
 }
 

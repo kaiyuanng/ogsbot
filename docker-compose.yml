@@ -1,0 +1,19 @@
+version: "3.9"
+
+services:
+  storm-processor:
+    build: ./backend/services/storm-processor
+    ports:
+      - "5001:5001"
+    restart: unless-stopped
+
+  backend:
+    build: ./backend
+    ports:
+      - "3000:3000"
+    environment:
+      - PORT=3000
+      - STORM_PROCESSOR_URL=http://storm-processor:5001
+    depends_on:
+      - storm-processor
+    restart: unless-stopped

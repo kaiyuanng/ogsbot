@@ -1,8 +1,5 @@
-const { dbscan } = require('./dbscan');
+const { dbscan, haversineKm } = require('./dbscan');
 
-// Spec: filter intensity > 60, DBSCAN eps=2 (grid units ≈ km), min_samples=3
-// Station data is sparser than a pixel grid, so eps=5 km, min_samples=2
-// preserves the same spirit while working with ~50 Singapore stations.
 const INTENSITY_THRESHOLD = 60;
 const EPS_KM = 5;
 const MIN_SAMPLES = 2;
@@ -18,7 +15,9 @@ function clusterStorms(cells) {
     const lng = pts.reduce((s, p) => s + p.lng, 0) / pts.length;
     const maxIntensity = Math.max(...pts.map(p => p.intensity));
     const avgIntensity = pts.reduce((s, p) => s + p.intensity, 0) / pts.length;
-    return { centroid: { lat, lng }, points: pts, maxIntensity, avgIntensity };
+    // Furthest point from centroid = storm edge radius
+    const radiusKm = Math.max(...pts.map(p => haversineKm(lat, lng, p.lat, p.lng)), 1);
+    return { centroid: { lat, lng }, points: pts, maxIntensity, avgIntensity, radiusKm };
   });
 }
 

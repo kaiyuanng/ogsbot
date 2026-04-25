@@ -6,6 +6,7 @@ final class HomeViewModel: NSObject, ObservableObject {
     @Published var decision: DecisionResponse?
     @Published var isLoading = false
     @Published var errorMessage: String?
+    @Published var locationDenied = false
 
     private let locationManager = CLLocationManager()
     private var locationContinuation: CheckedContinuation<CLLocation, Error>?
@@ -19,6 +20,7 @@ final class HomeViewModel: NSObject, ObservableObject {
     func fetchDecision() async {
         isLoading = true
         errorMessage = nil
+        locationDenied = false
 
         do {
             let location = try await requestLocation()
@@ -26,6 +28,8 @@ final class HomeViewModel: NSObject, ObservableObject {
                 lat: location.coordinate.latitude,
                 lng: location.coordinate.longitude
             )
+        } catch let err as CLError where err.code == .denied {
+            locationDenied = true
         } catch {
             errorMessage = error.localizedDescription
         }
@@ -58,7 +62,8 @@ extension HomeViewModel: CLLocationManagerDelegate {
     func locationManagerDidChangeAuthorization(_ manager: CLLocationManager) {
         if manager.authorizationStatus == .authorizedWhenInUse {
             manager.requestLocation()
-        } else if manager.authorizationStatus == .denied {
+        } else if manager.authorizationStatus == .denied
+                    || manager.authorizationStatus == .restricted {
             locationContinuation?.resume(throwing: CLError(.denied))
             locationContinuation = nil
         }

@@ -7,16 +7,21 @@ struct HomeView: View {
         ZStack {
             background.ignoresSafeArea()
 
+            // Pulse rings behind content for WAIT / DELAY states
+            if let state = vm.decision.flatMap({ RainState($0.state) }), state != .go {
+                PulseRings()
+            }
+
             VStack(spacing: 0) {
                 Spacer()
                 content
                 Spacer()
-                refreshButton
-                    .padding(.horizontal, 32)
+                footer
                     .padding(.bottom, 52)
             }
         }
         .task { await vm.fetchDecision() }
+        .animation(.easeInOut(duration: 0.5), value: vm.decision?.state)
     }
 
     // MARK: - Content
@@ -25,6 +30,8 @@ struct HomeView: View {
     private var content: some View {
         if vm.isLoading {
             loadingView
+        } else if vm.locationDenied {
+            locationDeniedView
         } else if let decision = vm.decision {
             decisionView(decision)
         } else if let error = vm.errorMessage {
@@ -70,6 +77,33 @@ struct HomeView: View {
         }
     }
 
+    private var locationDeniedView: some View {
+        VStack(spacing: 20) {
+            Image(systemName: "location.slash.fill")
+                .font(.system(size: 48))
+                .foregroundColor(.white.opacity(0.8))
+            Text("Location access needed")
+                .font(.title2.bold())
+                .foregroundColor(.white)
+            Text("Enable location in Settings so RainGo can check rain at your position.")
+                .font(.body)
+                .foregroundColor(.white.opacity(0.75))
+                .multilineTextAlignment(.center)
+                .padding(.horizontal, 40)
+            Button("Open Settings") {
+                if let url = URL(string: UIApplication.openSettingsURLString) {
+                    UIApplication.shared.open(url)
+                }
+            }
+            .font(.system(size: 16, weight: .semibold))
+            .foregroundColor(.white)
+            .padding(.horizontal, 32)
+            .padding(.vertical, 12)
+            .background(Color.white.opacity(0.22))
+            .cornerRadius(12)
+        }
+    }
+
     private func errorView(_ message: String) -> some View {
         VStack(spacing: 16) {
             Image(systemName: "exclamationmark.triangle.fill")
@@ -83,21 +117,30 @@ struct HomeView: View {
         }
     }
 
-    // MARK: - Refresh button
+    // MARK: - Footer (data age + refresh button)
 
-    private var refreshButton: some View {
-        Button {
-            Task { await vm.fetchDecision() }
-        } label: {
-            Text("Check again")
-                .font(.system(size: 18, weight: .semibold))
-                .foregroundColor(.white)
-                .frame(maxWidth: .infinity)
-                .padding(.vertical, 18)
-                .background(Color.white.opacity(0.22))
-                .cornerRadius(16)
+    private var footer: some View {
+        VStack(spacing: 12) {
+            if let age = vm.decision?.dataAgeSeconds, age >= 0 {
+                Text(dataAgeLabel(age))
+                    .font(.caption)
+                    .foregroundColor(.white.opacity(0.5))
+            }
+
+            Button {
+                Task { await vm.fetchDecision() }
+            } label: {
+                Text("Check again")
+                    .font(.system(size: 18, weight: .semibold))
+                    .foregroundColor(.white)
+                    .frame(maxWidth: .infinity)
+                    .padding(.vertical, 18)
+                    .background(Color.white.opacity(0.22))
+                    .cornerRadius(16)
+            }
+            .disabled(vm.isLoading)
+            .padding(.horizontal, 32)
         }
-        .disabled(vm.isLoading)
     }
 
     // MARK: - Helpers
@@ -119,6 +162,34 @@ struct HomeView: View {
             return d.minutes == 0 ? "It's raining now" : "Heavy rain in \(d.minutes) min"
         default:     return "—"
         }
+    }
+
+    private func dataAgeLabel(_ seconds: Int) -> String {
+        if seconds < 60  { return "Updated just now" }
+        let minutes = seconds / 60
+        return "Updated \(minutes) min ago"
+    }
+}
+
+// MARK: - Pulse animation
+
+private struct PulseRings: View {
+    @State private var scale: CGFloat = 0.6
+    @State private var opacity: Double = 0.4
+
+    var body: some View {
+        Circle()
+            .fill(Color.white.opacity(opacity))
+            .scaleEffect(scale)
+            .frame(width: 320, height: 320)
+            .onAppear {
+                withAnimation(
+                    .easeInOut(duration: 2.0).repeatForever(autoreverses: true)
+                ) {
+                    scale = 1.15
+                    opacity = 0.0
+                }
+            }
     }
 }
 

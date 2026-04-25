@@ -1,4 +1,5 @@
 require('dotenv').config();
+const axios = require('axios');
 const express = require('express');
 const cors = require('cors');
 const { fetchRadarFrame } = require('./src/radar/fetcher');
@@ -12,16 +13,45 @@ app.use(cors());
 app.use(express.json());
 
 const PORT = process.env.PORT || 3000;
-const POLL_INTERVAL_MS = 5 * 60 * 1000; // NEA radar updates every 5 minutes
+const PYTHON_URL = process.env.STORM_PROCESSOR_URL || 'http://localhost:5001';
+const POLL_INTERVAL_MS = 5 * 60 * 1000;
+
+// ── Python microservice path ───────────────────────────────────────────────
+
+async function clusterWithPython(cells, prevClusters) {
+  const { data } = await axios.post(
+    `${PYTHON_URL}/cluster`,
+    { cells, prev_clusters: prevClusters, interval_min: 5 },
+    { timeout: 5000 }
+  );
+  return data.clusters;
+}
+
+// ── Radar refresh loop ─────────────────────────────────────────────────────
 
 async function refreshRadar() {
   try {
-    const { prevClusters } = state.get();
+    // currClusters = last frame's output — correct reference for velocity tracking
+    const { currClusters } = state.get();
     const frame = await fetchRadarFrame();
-    const clusters = clusterStorms(frame.cells);
-    const tracked = trackStorms(prevClusters, clusters);
-    state.update(frame, clusters, tracked);
-    console.log(`[${new Date().toISOString()}] Radar refreshed — ${clusters.length} cluster(s), source: ${frame.source}`);
+
+    let tracked;
+    let clusterer;
+    try {
+      tracked = await clusterWithPython(frame.cells, currClusters);
+      clusterer = 'python';
+    } catch {
+      // Python service not running — JS DBSCAN fallback
+      const clusters = clusterStorms(frame.cells);
+      tracked = trackStorms(currClusters, clusters);
+      clusterer = 'js';
+    }
+
+    state.update(frame, tracked, tracked);
+    console.log(
+      `[${new Date().toISOString()}] Refreshed — ${tracked.length} cluster(s) ` +
+      `via ${clusterer}, source: ${frame.source}`
+    );
   } catch (err) {
     console.error('Radar refresh failed:', err.message);
   }
@@ -30,7 +60,8 @@ async function refreshRadar() {
 refreshRadar();
 setInterval(refreshRadar, POLL_INTERVAL_MS);
 
-// POST /decision — core endpoint
+// ── Routes ─────────────────────────────────────────────────────────────────
+
 app.post('/decision', (req, res) => {
   const { lat, lng } = req.body ?? {};
   if (lat == null || lng == null) {
@@ -46,7 +77,6 @@ app.post('/decision', (req, res) => {
   res.json({ ...decision, dataAgeSeconds });
 });
 
-// GET /health — liveness + debug info
 app.get('/health', (_req, res) => {
   const { trackedClusters, lastUpdated, frame } = state.get();
   res.json({
@@ -56,11 +86,10 @@ app.get('/health', (_req, res) => {
     activeClusters: trackedClusters.length,
     clusters: trackedClusters.map(c => ({
       centroid: c.centroid,
+      radiusKm: c.radiusKm ? Math.round(c.radiusKm * 10) / 10 : null,
       size: c.points.length,
       avgIntensity: Math.round(c.avgIntensity),
-      velocity: c.velocity
-        ? { speedKmh: Math.round(c.velocity.speedKmh) }
-        : null,
+      velocity: c.velocity ? { speedKmh: Math.round(c.velocity.speedKmh) } : null,
     })),
   });
 });
