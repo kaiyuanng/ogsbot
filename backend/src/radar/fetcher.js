@@ -85,9 +85,20 @@ function parsePngBuffer(buffer) {
   return cells;
 }
 
+// NEA's server rejects non-browser User-Agents — spoof a realistic one.
+const BROWSER_HEADERS = {
+  'User-Agent': 'Mozilla/5.0 (iPhone; CPU iPhone OS 17_0 like Mac OS X) AppleWebKit/605.1.15 (KHTML, like Gecko) Version/17.0 Mobile/15E148 Safari/604.1',
+  'Referer': 'https://www.weather.gov.sg/weather-rain-area-50km/',
+  'Accept': 'image/png,image/*,*/*',
+};
+
 async function fetchFromRadarPng() {
   const url = latestRadarUrl();
-  const res = await axios.get(url, { responseType: 'arraybuffer', timeout: 8000 });
+  const res = await axios.get(url, {
+    responseType: 'arraybuffer',
+    timeout: 8000,
+    headers: BROWSER_HEADERS,
+  });
   const cells = parsePngBuffer(Buffer.from(res.data));
   return { timestamp: new Date().toISOString(), source: 'nea-radar-png', cells };
 }
