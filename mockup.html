@@ -1,0 +1,661 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>NewsForge — Mockup</title>
+  <style>
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+    :root {
+      --bg: #0f0f0f;
+      --surface: #1a1a1a;
+      --surface2: #242424;
+      --border: #2e2e2e;
+      --accent: #e8ff00;
+      --accent2: #00d4aa;
+      --text: #f0f0f0;
+      --muted: #888;
+      --tag-bg: #1e2a1e;
+      --tag-text: #00d4aa;
+    }
+
+    body {
+      background: var(--bg);
+      color: var(--text);
+      font-family: 'Inter', system-ui, sans-serif;
+      font-size: 15px;
+      line-height: 1.6;
+    }
+
+    /* ── NAV ── */
+    nav {
+      position: sticky;
+      top: 0;
+      z-index: 100;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      padding: 0 32px;
+      height: 56px;
+      background: rgba(15,15,15,0.92);
+      backdrop-filter: blur(10px);
+      border-bottom: 1px solid var(--border);
+    }
+
+    .logo {
+      font-size: 18px;
+      font-weight: 800;
+      letter-spacing: -0.5px;
+      color: var(--accent);
+    }
+    .logo span { color: var(--text); }
+
+    .nav-links {
+      display: flex;
+      gap: 28px;
+      list-style: none;
+    }
+    .nav-links a {
+      color: var(--muted);
+      text-decoration: none;
+      font-size: 13px;
+      font-weight: 500;
+      transition: color .15s;
+    }
+    .nav-links a:hover, .nav-links a.active { color: var(--text); }
+
+    .nav-right {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+    }
+
+    .search-box {
+      display: flex;
+      align-items: center;
+      background: var(--surface2);
+      border: 1px solid var(--border);
+      border-radius: 8px;
+      padding: 6px 12px;
+      gap: 8px;
+    }
+    .search-box input {
+      background: none;
+      border: none;
+      outline: none;
+      color: var(--text);
+      font-size: 13px;
+      width: 180px;
+    }
+    .search-box input::placeholder { color: var(--muted); }
+    .search-icon { color: var(--muted); font-size: 13px; }
+
+    /* ── HERO ── */
+    .hero {
+      display: grid;
+      grid-template-columns: 1fr 340px;
+      gap: 24px;
+      max-width: 1200px;
+      margin: 32px auto;
+      padding: 0 32px;
+    }
+
+    .hero-main {
+      position: relative;
+      border-radius: 14px;
+      overflow: hidden;
+      background: var(--surface);
+      border: 1px solid var(--border);
+      cursor: pointer;
+    }
+    .hero-main:hover .hero-img { transform: scale(1.02); }
+
+    .hero-img {
+      width: 100%;
+      height: 380px;
+      object-fit: cover;
+      display: block;
+      transition: transform .3s ease;
+      background: linear-gradient(135deg, #1a2a1a 0%, #0a1a2a 50%, #1a0a2a 100%);
+    }
+    .hero-img-placeholder {
+      width: 100%;
+      height: 380px;
+      background: linear-gradient(135deg, #0d1f0d 0%, #0a1525 50%, #1a0d25 100%);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 48px;
+      opacity: 0.4;
+    }
+
+    .hero-overlay {
+      position: absolute;
+      bottom: 0; left: 0; right: 0;
+      background: linear-gradient(to top, rgba(0,0,0,0.95) 0%, transparent 100%);
+      padding: 32px 24px 24px;
+    }
+
+    .ai-badge {
+      display: inline-flex;
+      align-items: center;
+      gap: 5px;
+      background: var(--accent);
+      color: #000;
+      font-size: 10px;
+      font-weight: 700;
+      letter-spacing: 0.8px;
+      padding: 3px 8px;
+      border-radius: 4px;
+      text-transform: uppercase;
+      margin-bottom: 10px;
+    }
+
+    .hero-overlay h1 {
+      font-size: 24px;
+      font-weight: 700;
+      line-height: 1.3;
+      margin-bottom: 8px;
+    }
+
+    .hero-meta {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      font-size: 12px;
+      color: var(--muted);
+    }
+
+    .source-chip {
+      display: inline-flex;
+      align-items: center;
+      gap: 5px;
+      background: rgba(255,255,255,0.08);
+      padding: 3px 8px;
+      border-radius: 20px;
+      font-size: 11px;
+      color: #bbb;
+    }
+    .source-dot {
+      width: 6px;
+      height: 6px;
+      border-radius: 50%;
+      background: var(--accent2);
+    }
+
+    /* Hero sidebar */
+    .hero-sidebar {
+      display: flex;
+      flex-direction: column;
+      gap: 12px;
+    }
+
+    .sidebar-card {
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: 12px;
+      padding: 16px;
+      cursor: pointer;
+      transition: border-color .15s;
+      display: flex;
+      gap: 14px;
+    }
+    .sidebar-card:hover { border-color: #444; }
+
+    .sidebar-thumb {
+      width: 70px;
+      height: 70px;
+      border-radius: 8px;
+      flex-shrink: 0;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 24px;
+    }
+    .thumb-1 { background: linear-gradient(135deg, #1a2a0a, #0a2a1a); }
+    .thumb-2 { background: linear-gradient(135deg, #2a0a0a, #1a0a2a); }
+    .thumb-3 { background: linear-gradient(135deg, #0a0a2a, #1a2a2a); }
+
+    .sidebar-content h3 {
+      font-size: 13px;
+      font-weight: 600;
+      line-height: 1.4;
+      margin-bottom: 6px;
+    }
+    .sidebar-meta {
+      font-size: 11px;
+      color: var(--muted);
+    }
+
+    /* ── SECTION ── */
+    .section {
+      max-width: 1200px;
+      margin: 0 auto 48px;
+      padding: 0 32px;
+    }
+
+    .section-header {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      margin-bottom: 20px;
+    }
+
+    .section-title {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      font-size: 16px;
+      font-weight: 700;
+    }
+    .section-title::before {
+      content: '';
+      display: block;
+      width: 3px;
+      height: 18px;
+      background: var(--accent);
+      border-radius: 2px;
+    }
+
+    .see-all {
+      font-size: 12px;
+      color: var(--muted);
+      text-decoration: none;
+      border: 1px solid var(--border);
+      padding: 4px 12px;
+      border-radius: 6px;
+      transition: all .15s;
+    }
+    .see-all:hover { color: var(--text); border-color: #444; }
+
+    /* Cards grid */
+    .cards-grid {
+      display: grid;
+      grid-template-columns: repeat(3, 1fr);
+      gap: 16px;
+    }
+
+    .card {
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: 12px;
+      overflow: hidden;
+      cursor: pointer;
+      transition: transform .15s, border-color .15s;
+    }
+    .card:hover { transform: translateY(-2px); border-color: #444; }
+
+    .card-thumb {
+      height: 140px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 36px;
+    }
+    .ct-1 { background: linear-gradient(135deg, #0d1f0d, #152515); }
+    .ct-2 { background: linear-gradient(135deg, #1f0d0d, #251515); }
+    .ct-3 { background: linear-gradient(135deg, #0d0d1f, #151525); }
+    .ct-4 { background: linear-gradient(135deg, #1f1a0d, #25200f); }
+    .ct-5 { background: linear-gradient(135deg, #0d1f1f, #152525); }
+    .ct-6 { background: linear-gradient(135deg, #1a0d1f, #200f25); }
+
+    .card-body { padding: 14px; }
+
+    .tag {
+      display: inline-block;
+      background: var(--tag-bg);
+      color: var(--tag-text);
+      font-size: 10px;
+      font-weight: 600;
+      letter-spacing: 0.5px;
+      padding: 2px 7px;
+      border-radius: 4px;
+      text-transform: uppercase;
+      margin-bottom: 8px;
+    }
+    .tag.red { background: #2a0e0e; color: #ff6b6b; }
+    .tag.blue { background: #0e1a2a; color: #6bb5ff; }
+    .tag.yellow { background: #2a240e; color: #ffd166; }
+    .tag.purple { background: #1a0e2a; color: #c77dff; }
+
+    .card-body h3 {
+      font-size: 14px;
+      font-weight: 600;
+      line-height: 1.4;
+      margin-bottom: 8px;
+    }
+
+    .card-body p {
+      font-size: 12px;
+      color: var(--muted);
+      line-height: 1.5;
+      margin-bottom: 12px;
+      display: -webkit-box;
+      -webkit-line-clamp: 2;
+      -webkit-box-orient: vertical;
+      overflow: hidden;
+    }
+
+    .card-footer {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      font-size: 11px;
+      color: var(--muted);
+    }
+
+    .ai-indicator {
+      display: flex;
+      align-items: center;
+      gap: 4px;
+      color: var(--accent);
+      font-size: 10px;
+      font-weight: 600;
+    }
+    .ai-dot {
+      width: 5px;
+      height: 5px;
+      border-radius: 50%;
+      background: var(--accent);
+      animation: pulse 2s infinite;
+    }
+    @keyframes pulse {
+      0%, 100% { opacity: 1; }
+      50% { opacity: 0.3; }
+    }
+
+    /* ── SOURCES BAR ── */
+    .sources-bar {
+      max-width: 1200px;
+      margin: 0 auto 40px;
+      padding: 0 32px;
+    }
+
+    .sources-label {
+      font-size: 11px;
+      font-weight: 600;
+      color: var(--muted);
+      text-transform: uppercase;
+      letter-spacing: 1px;
+      margin-bottom: 12px;
+    }
+
+    .sources-list {
+      display: flex;
+      gap: 10px;
+      flex-wrap: wrap;
+    }
+
+    .source-pill {
+      display: flex;
+      align-items: center;
+      gap: 6px;
+      background: var(--surface2);
+      border: 1px solid var(--border);
+      border-radius: 20px;
+      padding: 5px 12px;
+      font-size: 12px;
+      color: var(--muted);
+      cursor: pointer;
+      transition: all .15s;
+    }
+    .source-pill:hover, .source-pill.active {
+      border-color: var(--accent);
+      color: var(--text);
+    }
+    .source-pill.active .source-dot { background: var(--accent); }
+
+    /* ── TICKER ── */
+    .ticker {
+      background: var(--accent);
+      color: #000;
+      padding: 8px 0;
+      overflow: hidden;
+      white-space: nowrap;
+      margin-bottom: 0;
+    }
+    .ticker-inner {
+      display: inline-flex;
+      gap: 60px;
+      animation: scroll 30s linear infinite;
+    }
+    @keyframes scroll {
+      0% { transform: translateX(0); }
+      100% { transform: translateX(-50%); }
+    }
+    .ticker-item {
+      font-size: 12px;
+      font-weight: 600;
+      letter-spacing: 0.3px;
+    }
+    .ticker-sep { opacity: 0.4; }
+
+    /* ── FOOTER ── */
+    footer {
+      border-top: 1px solid var(--border);
+      padding: 24px 32px;
+      text-align: center;
+      font-size: 12px;
+      color: var(--muted);
+    }
+
+    /* Responsive */
+    @media (max-width: 768px) {
+      .hero { grid-template-columns: 1fr; }
+      .hero-sidebar { flex-direction: row; overflow-x: auto; }
+      .sidebar-card { min-width: 240px; }
+      .cards-grid { grid-template-columns: 1fr; }
+      nav { padding: 0 16px; }
+      .nav-links { display: none; }
+    }
+  </style>
+</head>
+<body>
+
+<!-- TICKER -->
+<div class="ticker">
+  <div class="ticker-inner">
+    <span class="ticker-item">⚡ Markets rise as Fed signals pause on rate hikes</span>
+    <span class="ticker-sep">|</span>
+    <span class="ticker-item">🌍 G7 leaders meet in Rome to discuss AI governance frameworks</span>
+    <span class="ticker-sep">|</span>
+    <span class="ticker-item">🚀 SpaceX successfully deploys 60-satellite Starlink batch</span>
+    <span class="ticker-sep">|</span>
+    <span class="ticker-item">💊 New Alzheimer's drug shows 35% slowdown in clinical trials</span>
+    <span class="ticker-sep">|</span>
+    <span class="ticker-item">⚽ Champions League semi-finals: Madrid vs. Arsenal tonight</span>
+    <span class="ticker-sep">|</span>
+    <!-- duplicate for seamless loop -->
+    <span class="ticker-item">⚡ Markets rise as Fed signals pause on rate hikes</span>
+    <span class="ticker-sep">|</span>
+    <span class="ticker-item">🌍 G7 leaders meet in Rome to discuss AI governance frameworks</span>
+    <span class="ticker-sep">|</span>
+    <span class="ticker-item">🚀 SpaceX successfully deploys 60-satellite Starlink batch</span>
+    <span class="ticker-sep">|</span>
+    <span class="ticker-item">💊 New Alzheimer's drug shows 35% slowdown in clinical trials</span>
+    <span class="ticker-sep">|</span>
+    <span class="ticker-item">⚽ Champions League semi-finals: Madrid vs. Arsenal tonight</span>
+    <span class="ticker-sep">|</span>
+  </div>
+</div>
+
+<!-- NAV -->
+<nav>
+  <div class="logo">News<span>Forge</span></div>
+  <ul class="nav-links">
+    <li><a href="#" class="active">Top Stories</a></li>
+    <li><a href="#">World</a></li>
+    <li><a href="#">Tech</a></li>
+    <li><a href="#">Business</a></li>
+    <li><a href="#">Science</a></li>
+    <li><a href="#">Sports</a></li>
+  </ul>
+  <div class="nav-right">
+    <div class="search-box">
+      <span class="search-icon">⌕</span>
+      <input type="text" placeholder="Search articles…" />
+    </div>
+  </div>
+</nav>
+
+<!-- HERO -->
+<div class="hero">
+  <div class="hero-main">
+    <div class="hero-img-placeholder">🌐</div>
+    <div class="hero-overlay">
+      <div class="ai-badge">⚡ AI Summary</div>
+      <h1>Global Leaders Reach Landmark Agreement on AI Safety Standards at Emergency Summit</h1>
+      <div class="hero-meta">
+        <div class="source-chip"><span class="source-dot"></span> Reuters · BBC · AP</div>
+        <span>3 sources · 2 hours ago</span>
+      </div>
+    </div>
+  </div>
+
+  <div class="hero-sidebar">
+    <div class="sidebar-card">
+      <div class="sidebar-thumb thumb-1">📈</div>
+      <div class="sidebar-content">
+        <h3>Fed holds rates steady; analysts expect cuts by Q3 2026</h3>
+        <div class="sidebar-meta">
+          <span class="ai-indicator"><span class="ai-dot"></span> AI</span>
+          &nbsp;· Bloomberg · 1h ago
+        </div>
+      </div>
+    </div>
+
+    <div class="sidebar-card">
+      <div class="sidebar-thumb thumb-2">🔥</div>
+      <div class="sidebar-content">
+        <h3>Wildfire season arrives early across western US states</h3>
+        <div class="sidebar-meta">
+          <span class="ai-indicator"><span class="ai-dot"></span> AI</span>
+          &nbsp;· Reuters · 4h ago
+        </div>
+      </div>
+    </div>
+
+    <div class="sidebar-card">
+      <div class="sidebar-thumb thumb-3">🤖</div>
+      <div class="sidebar-content">
+        <h3>OpenAI releases GPT-5 with multimodal reasoning capabilities</h3>
+        <div class="sidebar-meta">
+          <span class="ai-indicator"><span class="ai-dot"></span> AI</span>
+          &nbsp;· The Verge · 6h ago
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- SOURCES BAR -->
+<div class="sources-bar">
+  <div class="sources-label">Sources</div>
+  <div class="sources-list">
+    <div class="source-pill active"><span class="source-dot"></span> All</div>
+    <div class="source-pill"><span class="source-dot"></span> Reuters</div>
+    <div class="source-pill"><span class="source-dot"></span> BBC</div>
+    <div class="source-pill"><span class="source-dot"></span> AP News</div>
+    <div class="source-pill"><span class="source-dot"></span> The Guardian</div>
+    <div class="source-pill"><span class="source-dot"></span> Bloomberg</div>
+    <div class="source-pill"><span class="source-dot"></span> The Verge</div>
+    <div class="source-pill"><span class="source-dot"></span> Ars Technica</div>
+    <div class="source-pill"><span class="source-dot"></span> Al Jazeera</div>
+  </div>
+</div>
+
+<!-- LATEST ARTICLES -->
+<div class="section">
+  <div class="section-header">
+    <div class="section-title">Latest Stories</div>
+    <a href="#" class="see-all">See all →</a>
+  </div>
+
+  <div class="cards-grid">
+    <div class="card">
+      <div class="card-thumb ct-1">🧬</div>
+      <div class="card-body">
+        <span class="tag">Science</span>
+        <h3>CRISPR gene therapy reverses inherited blindness in landmark trial</h3>
+        <p>Researchers at Johns Hopkins report full restoration of light sensitivity in 8 of 12 patients, marking a breakthrough in ocular gene therapy.</p>
+        <div class="card-footer">
+          <span>Nature · 30m ago</span>
+          <span class="ai-indicator"><span class="ai-dot"></span> AI Written</span>
+        </div>
+      </div>
+    </div>
+
+    <div class="card">
+      <div class="card-thumb ct-2">💰</div>
+      <div class="card-body">
+        <span class="tag red">Business</span>
+        <h3>Apple reports record $98B quarter driven by Vision Pro enterprise sales</h3>
+        <p>Services and spatial computing segments outpaced iPhone for the first time as corporations adopt mixed-reality workflows.</p>
+        <div class="card-footer">
+          <span>Bloomberg · 1h ago</span>
+          <span class="ai-indicator"><span class="ai-dot"></span> AI Written</span>
+        </div>
+      </div>
+    </div>
+
+    <div class="card">
+      <div class="card-thumb ct-3">🛰️</div>
+      <div class="card-body">
+        <span class="tag blue">Tech</span>
+        <h3>NASA's Artemis IV crew selected: first international moon mission</h3>
+        <p>The four-person crew includes astronauts from the US, ESA, JAXA, and CSA, targeting a 2027 lunar surface landing.</p>
+        <div class="card-footer">
+          <span>AP News · 2h ago</span>
+          <span class="ai-indicator"><span class="ai-dot"></span> AI Written</span>
+        </div>
+      </div>
+    </div>
+
+    <div class="card">
+      <div class="card-thumb ct-4">⚡</div>
+      <div class="card-body">
+        <span class="tag yellow">Energy</span>
+        <h3>China surpasses 2TW solar capacity milestone, doubling 2023 output</h3>
+        <p>The rapid expansion puts China on track to meet its 2030 carbon neutrality goals five years ahead of schedule.</p>
+        <div class="card-footer">
+          <span>Reuters · 3h ago</span>
+          <span class="ai-indicator"><span class="ai-dot"></span> AI Written</span>
+        </div>
+      </div>
+    </div>
+
+    <div class="card">
+      <div class="card-thumb ct-5">🏛️</div>
+      <div class="card-body">
+        <span class="tag">World</span>
+        <h3>EU passes Digital Markets Act enforcement wave, fining three tech giants</h3>
+        <p>Meta, Google, and Apple face combined penalties exceeding €4.2B for non-compliance with interoperability mandates.</p>
+        <div class="card-footer">
+          <span>The Guardian · 5h ago</span>
+          <span class="ai-indicator"><span class="ai-dot"></span> AI Written</span>
+        </div>
+      </div>
+    </div>
+
+    <div class="card">
+      <div class="card-thumb ct-6">🧠</div>
+      <div class="card-body">
+        <span class="tag purple">AI</span>
+        <h3>DeepMind's AlphaFold 4 predicts full cell proteome interactions</h3>
+        <p>The model can now map protein-protein interactions at cellular scale, opening new avenues in drug discovery.</p>
+        <div class="card-footer">
+          <span>Ars Technica · 7h ago</span>
+          <span class="ai-indicator"><span class="ai-dot"></span> AI Written</span>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<footer>
+  NewsForge — AI-powered news aggregation · Sources: Reuters, BBC, AP, Bloomberg, The Guardian, The Verge, Ars Technica, Al Jazeera · Articles summarised by Claude AI
+</footer>
+
+</body>
+</html>
