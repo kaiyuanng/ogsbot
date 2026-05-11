@@ -28,6 +28,21 @@ db.exec(`
   CREATE INDEX IF NOT EXISTS idx_articles_source    ON articles(source_name);
   CREATE INDEX IF NOT EXISTS idx_articles_category  ON articles(category);
   CREATE INDEX IF NOT EXISTS idx_articles_type      ON articles(source_type);
+
+  CREATE TABLE IF NOT EXISTS sponsored_listings (
+    id          INTEGER PRIMARY KEY AUTOINCREMENT,
+    company     TEXT NOT NULL,
+    contact     TEXT NOT NULL,
+    headline    TEXT NOT NULL,
+    body        TEXT NOT NULL,
+    cta_text    TEXT NOT NULL DEFAULT 'Learn More',
+    cta_url     TEXT NOT NULL,
+    tier        TEXT NOT NULL DEFAULT 'sponsored' CHECK(tier IN ('sponsored','brand_release','brand_partner')),
+    status      TEXT NOT NULL DEFAULT 'pending' CHECK(status IN ('pending','active','paused','expired')),
+    starts_at   TEXT,
+    ends_at     TEXT,
+    created_at  TEXT NOT NULL DEFAULT (datetime('now'))
+  );
 `);
 
 const insert = db.prepare(`
@@ -60,4 +75,23 @@ module.exports = {
   getArticle: (id) => db.prepare('SELECT * FROM articles WHERE id=?').get(id),
   countArticles: () => db.prepare('SELECT COUNT(*) as n FROM articles').get().n,
   getByUrl: (url) => db.prepare('SELECT * FROM articles WHERE source_url=?').get(url),
+  deleteArticle: (id) => db.prepare('DELETE FROM articles WHERE id=?').run(id),
+  updateArticle: (id, fields) => {
+    const allowed = ['title','lede','body','category','tags','featured'];
+    const sets = Object.keys(fields).filter(k => allowed.includes(k)).map(k => `${k}=@${k}`);
+    if (!sets.length) return;
+    db.prepare(`UPDATE articles SET ${sets.join(',')} WHERE id=@id`).run({ ...fields, id });
+  },
+  getSponsored: () => db.prepare("SELECT * FROM sponsored_listings ORDER BY created_at DESC").all(),
+  insertSponsored: (s) => db.prepare(`
+    INSERT INTO sponsored_listings (company,contact,headline,body,cta_text,cta_url,tier,status,starts_at,ends_at)
+    VALUES (@company,@contact,@headline,@body,@cta_text,@cta_url,@tier,@status,@starts_at,@ends_at)
+  `).run(s),
+  updateSponsored: (id, fields) => {
+    const allowed = ['headline','body','cta_text','cta_url','tier','status','starts_at','ends_at'];
+    const sets = Object.keys(fields).filter(k => allowed.includes(k)).map(k => `${k}=@${k}`);
+    if (!sets.length) return;
+    db.prepare(`UPDATE sponsored_listings SET ${sets.join(',')} WHERE id=@id`).run({ ...fields, id });
+  },
+  deleteSponsored: (id) => db.prepare('DELETE FROM sponsored_listings WHERE id=?').run(id),
 };

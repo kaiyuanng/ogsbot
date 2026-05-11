@@ -1,0 +1,664 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Admin — pressrelease.sg</title>
+<style>
+  *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+  :root {
+    --red: #C8102E; --navy: #1a2744; --bg: #f4f5f7;
+    --card: #fff; --border: #e0e4ea; --text: #1a1a2e; --muted: #6b7280;
+    --green: #16a34a; --amber: #d97706; --blue: #2563eb;
+  }
+  body { font-family: Inter, system-ui, sans-serif; background: var(--bg); color: var(--text); font-size: 14px; }
+  a { color: var(--blue); text-decoration: none; }
+
+  /* Layout */
+  .sidebar {
+    position: fixed; top: 0; left: 0; width: 220px; height: 100vh;
+    background: var(--navy); color: #fff; padding: 0; display: flex; flex-direction: column;
+  }
+  .sidebar-logo {
+    padding: 20px 20px 16px; font-weight: 700; font-size: 15px;
+    border-bottom: 1px solid rgba(255,255,255,.1);
+  }
+  .sidebar-logo span { color: var(--red); }
+  .sidebar nav { flex: 1; padding: 12px 0; }
+  .nav-item {
+    display: flex; align-items: center; gap: 10px;
+    padding: 10px 20px; color: rgba(255,255,255,.7); cursor: pointer;
+    border-left: 3px solid transparent; font-size: 13px; transition: all .15s;
+  }
+  .nav-item:hover, .nav-item.active {
+    color: #fff; background: rgba(255,255,255,.07); border-left-color: var(--red);
+  }
+  .sidebar-footer { padding: 16px 20px; font-size: 12px; color: rgba(255,255,255,.4); border-top: 1px solid rgba(255,255,255,.1); }
+
+  .main { margin-left: 220px; min-height: 100vh; }
+  .topbar {
+    background: var(--card); border-bottom: 1px solid var(--border);
+    padding: 14px 28px; display: flex; align-items: center; justify-content: space-between;
+    position: sticky; top: 0; z-index: 10;
+  }
+  .topbar h1 { font-size: 18px; font-weight: 700; }
+  .content { padding: 28px; }
+
+  /* Stat cards */
+  .stat-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(160px, 1fr)); gap: 16px; margin-bottom: 28px; }
+  .stat-card { background: var(--card); border: 1px solid var(--border); border-radius: 10px; padding: 18px 20px; }
+  .stat-card .label { font-size: 12px; color: var(--muted); margin-bottom: 6px; text-transform: uppercase; letter-spacing: .05em; }
+  .stat-card .value { font-size: 28px; font-weight: 700; color: var(--navy); }
+  .stat-card .value.red { color: var(--red); }
+
+  /* Cards / panels */
+  .panel { background: var(--card); border: 1px solid var(--border); border-radius: 10px; margin-bottom: 24px; }
+  .panel-header { padding: 16px 20px; border-bottom: 1px solid var(--border); display: flex; align-items: center; justify-content: space-between; }
+  .panel-header h2 { font-size: 15px; font-weight: 600; }
+  .panel-body { padding: 20px; }
+
+  /* Table */
+  table { width: 100%; border-collapse: collapse; }
+  th { text-align: left; font-size: 11px; text-transform: uppercase; letter-spacing: .05em; color: var(--muted); padding: 8px 12px; border-bottom: 2px solid var(--border); }
+  td { padding: 10px 12px; border-bottom: 1px solid var(--border); vertical-align: middle; }
+  tr:last-child td { border-bottom: none; }
+  tr:hover td { background: #fafbfc; }
+  .truncate { max-width: 320px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+
+  /* Badges */
+  .badge { display: inline-block; padding: 2px 8px; border-radius: 999px; font-size: 11px; font-weight: 600; }
+  .badge-gov { background: #dbeafe; color: #1d4ed8; }
+  .badge-corp { background: #fef3c7; color: #92400e; }
+  .badge-active { background: #dcfce7; color: #15803d; }
+  .badge-pending { background: #fef9c3; color: #854d0e; }
+  .badge-paused { background: #f1f5f9; color: #475569; }
+  .badge-expired { background: #fee2e2; color: #991b1b; }
+
+  /* Buttons */
+  .btn { display: inline-flex; align-items: center; gap: 6px; padding: 7px 14px; border-radius: 6px; font-size: 13px; font-weight: 500; cursor: pointer; border: none; transition: all .15s; }
+  .btn-primary { background: var(--red); color: #fff; }
+  .btn-primary:hover { background: #a80d26; }
+  .btn-secondary { background: var(--bg); color: var(--text); border: 1px solid var(--border); }
+  .btn-secondary:hover { background: #e9eaec; }
+  .btn-danger { background: #fee2e2; color: #991b1b; }
+  .btn-danger:hover { background: #fecaca; }
+  .btn-sm { padding: 4px 10px; font-size: 12px; }
+  .btn-green { background: #dcfce7; color: #15803d; }
+  .btn-green:hover { background: #bbf7d0; }
+
+  /* Forms */
+  .form-group { margin-bottom: 14px; }
+  .form-group label { display: block; font-size: 12px; font-weight: 600; color: var(--muted); margin-bottom: 5px; text-transform: uppercase; letter-spacing: .04em; }
+  input[type=text], input[type=url], input[type=date], select, textarea {
+    width: 100%; padding: 8px 10px; border: 1px solid var(--border);
+    border-radius: 6px; font-size: 13px; font-family: inherit;
+    background: #fff; color: var(--text); outline: none; transition: border .15s;
+  }
+  input:focus, select:focus, textarea:focus { border-color: var(--red); }
+  textarea { resize: vertical; min-height: 80px; }
+  .form-row { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; }
+
+  /* Log */
+  .log-box {
+    background: #0f172a; color: #94a3b8; font-family: monospace; font-size: 12px;
+    padding: 16px; border-radius: 8px; height: 280px; overflow-y: auto;
+    white-space: pre-wrap; word-break: break-all;
+  }
+  .log-box .error { color: #f87171; }
+  .log-box .info  { color: #86efac; }
+
+  /* Search */
+  .search-bar { display: flex; gap: 10px; margin-bottom: 16px; }
+  .search-bar input { flex: 1; }
+
+  /* Modal */
+  .modal-overlay {
+    display: none; position: fixed; inset: 0; background: rgba(0,0,0,.45);
+    z-index: 100; align-items: center; justify-content: center;
+  }
+  .modal-overlay.open { display: flex; }
+  .modal { background: #fff; border-radius: 12px; width: 600px; max-width: 95vw; max-height: 90vh; overflow-y: auto; }
+  .modal-header { padding: 18px 22px; border-bottom: 1px solid var(--border); display: flex; justify-content: space-between; align-items: center; }
+  .modal-header h3 { font-size: 16px; font-weight: 700; }
+  .modal-body { padding: 22px; }
+  .modal-footer { padding: 14px 22px; border-top: 1px solid var(--border); display: flex; gap: 10px; justify-content: flex-end; }
+  .close-btn { background: none; border: none; font-size: 20px; cursor: pointer; color: var(--muted); line-height: 1; }
+
+  /* Toast */
+  #toast {
+    position: fixed; bottom: 24px; right: 24px; background: var(--navy); color: #fff;
+    padding: 10px 18px; border-radius: 8px; font-size: 13px; z-index: 200;
+    opacity: 0; transition: opacity .25s; pointer-events: none;
+  }
+  #toast.show { opacity: 1; }
+
+  /* Scrape status indicator */
+  .pulse { display: inline-block; width: 8px; height: 8px; border-radius: 50%; background: var(--green); }
+  .pulse.running { animation: blink 1s infinite; background: var(--amber); }
+  @keyframes blink { 50% { opacity: .3; } }
+
+  /* Pagination */
+  .pagination { display: flex; gap: 6px; align-items: center; margin-top: 16px; }
+  .page-btn { padding: 5px 10px; border: 1px solid var(--border); border-radius: 5px; cursor: pointer; font-size: 12px; background: var(--card); }
+  .page-btn.active { background: var(--navy); color: #fff; border-color: var(--navy); }
+  .page-btn:disabled { opacity: .4; cursor: not-allowed; }
+
+  /* Page sections */
+  .page { display: none; }
+  .page.active { display: block; }
+</style>
+</head>
+<body>
+
+<div class="sidebar">
+  <div class="sidebar-logo">pressrelease<span>.sg</span> admin</div>
+  <nav>
+    <div class="nav-item active" data-page="dashboard">
+      <svg width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><rect x="3" y="3" width="7" height="7"/><rect x="14" y="3" width="7" height="7"/><rect x="14" y="14" width="7" height="7"/><rect x="3" y="14" width="7" height="7"/></svg>
+      Dashboard
+    </div>
+    <div class="nav-item" data-page="articles">
+      <svg width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14,2 14,8 20,8"/></svg>
+      Articles
+    </div>
+    <div class="nav-item" data-page="sponsored">
+      <svg width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="16"/><line x1="8" y1="12" x2="16" y2="12"/></svg>
+      Sponsored
+    </div>
+    <div class="nav-item" data-page="scraper">
+      <svg width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><polyline points="23 4 23 10 17 10"/><path d="M20.49 15a9 9 0 1 1-2.12-9.36L23 10"/></svg>
+      Scraper
+    </div>
+  </nav>
+  <div class="sidebar-footer">pressrelease.sg v1.0</div>
+</div>
+
+<div class="main">
+  <div class="topbar">
+    <h1 id="page-title">Dashboard</h1>
+    <div style="display:flex;gap:10px;align-items:center;">
+      <a href="/" target="_blank" class="btn btn-secondary btn-sm">View Site ↗</a>
+    </div>
+  </div>
+
+  <div class="content">
+
+    <!-- DASHBOARD -->
+    <div class="page active" id="page-dashboard">
+      <div class="stat-grid" id="stat-grid">
+        <div class="stat-card"><div class="label">Total Articles</div><div class="value" id="s-total">—</div></div>
+        <div class="stat-card"><div class="label">Today</div><div class="value red" id="s-today">—</div></div>
+        <div class="stat-card"><div class="label">Government</div><div class="value" id="s-govt">—</div></div>
+        <div class="stat-card"><div class="label">Corporate</div><div class="value" id="s-corp">—</div></div>
+        <div class="stat-card"><div class="label">AI Rewritten</div><div class="value" id="s-ai">—</div></div>
+      </div>
+
+      <div class="panel">
+        <div class="panel-header">
+          <h2>Sources Overview</h2>
+          <button class="btn btn-primary btn-sm" onclick="triggerScrape()">Run Scrape Now</button>
+        </div>
+        <div class="panel-body" style="padding:0">
+          <table>
+            <thead><tr><th>Source</th><th>Type</th><th>Category</th><th>Articles</th><th>Latest</th></tr></thead>
+            <tbody id="sources-tbody"><tr><td colspan="5" style="text-align:center;color:var(--muted);padding:20px">Loading…</td></tr></tbody>
+          </table>
+        </div>
+      </div>
+    </div>
+
+    <!-- ARTICLES -->
+    <div class="page" id="page-articles">
+      <div class="search-bar">
+        <input type="text" id="article-search" placeholder="Search articles…" oninput="searchArticles()">
+        <button class="btn btn-secondary" onclick="loadArticles()">Refresh</button>
+      </div>
+      <div class="panel">
+        <div class="panel-header">
+          <h2>All Articles</h2>
+          <span id="article-count" style="font-size:13px;color:var(--muted)"></span>
+        </div>
+        <div style="overflow-x:auto">
+          <table>
+            <thead><tr><th>ID</th><th>Title</th><th>Source</th><th>Category</th><th>Type</th><th>Published</th><th>Actions</th></tr></thead>
+            <tbody id="articles-tbody"><tr><td colspan="7" style="text-align:center;color:var(--muted);padding:20px">Loading…</td></tr></tbody>
+          </table>
+        </div>
+        <div class="panel-body" style="padding:12px 20px">
+          <div class="pagination" id="article-pagination"></div>
+        </div>
+      </div>
+    </div>
+
+    <!-- SPONSORED -->
+    <div class="page" id="page-sponsored">
+      <div style="display:flex;justify-content:flex-end;margin-bottom:16px">
+        <button class="btn btn-primary" onclick="openSponsoredModal()">+ New Listing</button>
+      </div>
+      <div class="panel">
+        <div class="panel-header"><h2>Sponsored Listings</h2></div>
+        <div style="overflow-x:auto">
+          <table>
+            <thead><tr><th>Company</th><th>Headline</th><th>Tier</th><th>Status</th><th>Period</th><th>Actions</th></tr></thead>
+            <tbody id="sponsored-tbody"><tr><td colspan="6" style="text-align:center;color:var(--muted);padding:20px">Loading…</td></tr></tbody>
+          </table>
+        </div>
+      </div>
+    </div>
+
+    <!-- SCRAPER -->
+    <div class="page" id="page-scraper">
+      <div class="panel">
+        <div class="panel-header">
+          <h2>Scraper Control</h2>
+          <div style="display:flex;gap:10px;align-items:center">
+            <span class="pulse" id="scrape-pulse"></span>
+            <span id="scrape-status" style="font-size:13px;color:var(--muted)">Idle</span>
+            <button class="btn btn-primary" onclick="triggerScrape()">Run Scrape</button>
+          </div>
+        </div>
+        <div class="panel-body">
+          <p style="font-size:13px;color:var(--muted);margin-bottom:12px">Scraper runs automatically every 15 minutes. Logs appear below.</p>
+          <div class="log-box" id="scrape-log">No logs yet. Run a scrape to see output.</div>
+          <div style="margin-top:10px;display:flex;gap:8px">
+            <button class="btn btn-secondary btn-sm" onclick="pollLog()">Refresh Log</button>
+            <button class="btn btn-secondary btn-sm" onclick="clearLog()">Clear</button>
+          </div>
+        </div>
+      </div>
+
+      <div class="panel">
+        <div class="panel-header"><h2>Configured Sources (10)</h2></div>
+        <div class="panel-body" style="padding:0">
+          <table>
+            <thead><tr><th>Source</th><th>Type</th><th>Method</th><th>URL</th></tr></thead>
+            <tbody>
+              <tr><td>MAS</td><td><span class="badge badge-gov">Government</span></td><td>HTML</td><td><a href="https://www.mas.gov.sg/news" target="_blank">mas.gov.sg/news</a></td></tr>
+              <tr><td>MOH</td><td><span class="badge badge-gov">Government</span></td><td>HTML</td><td><a href="https://www.moh.gov.sg/news-highlights" target="_blank">moh.gov.sg</a></td></tr>
+              <tr><td>MOM</td><td><span class="badge badge-gov">Government</span></td><td>HTML</td><td><a href="https://www.mom.gov.sg/newsroom/press-releases" target="_blank">mom.gov.sg</a></td></tr>
+              <tr><td>HDB</td><td><span class="badge badge-gov">Government</span></td><td>HTML</td><td><a href="https://www.hdb.gov.sg" target="_blank">hdb.gov.sg</a></td></tr>
+              <tr><td>NEA</td><td><span class="badge badge-gov">Government</span></td><td>RSS</td><td><a href="https://www.nea.gov.sg/rss/media-releases-rss" target="_blank">nea.gov.sg RSS</a></td></tr>
+              <tr><td>DBS Bank</td><td><span class="badge badge-corp">Corporate</span></td><td>HTML</td><td><a href="https://www.dbs.com/newsroom" target="_blank">dbs.com/newsroom</a></td></tr>
+              <tr><td>OCBC Bank</td><td><span class="badge badge-corp">Corporate</span></td><td>HTML</td><td><a href="https://www.ocbc.com" target="_blank">ocbc.com</a></td></tr>
+              <tr><td>Singtel</td><td><span class="badge badge-corp">Corporate</span></td><td>RSS→HTML</td><td><a href="https://www.singtel.com/about-singtel/media-centre" target="_blank">singtel.com</a></td></tr>
+              <tr><td>Grab</td><td><span class="badge badge-corp">Corporate</span></td><td>HTML</td><td><a href="https://newsroom.grab.com" target="_blank">newsroom.grab.com</a></td></tr>
+              <tr><td>CapitaLand</td><td><span class="badge badge-corp">Corporate</span></td><td>HTML</td><td><a href="https://www.capitaland.com/newsroom" target="_blank">capitaland.com</a></td></tr>
+            </tbody>
+          </table>
+        </div>
+      </div>
+    </div>
+
+  </div>
+</div>
+
+<!-- Edit Article Modal -->
+<div class="modal-overlay" id="edit-modal">
+  <div class="modal">
+    <div class="modal-header">
+      <h3>Edit Article</h3>
+      <button class="close-btn" onclick="closeModal('edit-modal')">×</button>
+    </div>
+    <div class="modal-body">
+      <input type="hidden" id="edit-id">
+      <div class="form-group"><label>Title</label><input type="text" id="edit-title"></div>
+      <div class="form-group"><label>Lede</label><textarea id="edit-lede" rows="2"></textarea></div>
+      <div class="form-group"><label>Category</label>
+        <select id="edit-category">
+          <option>Housing</option><option>Health</option><option>Education</option>
+          <option>Transport</option><option>Money &amp; CPF</option><option>Jobs</option>
+          <option>Environment</option><option>Tech &amp; Digital</option><option>Economy</option>
+          <option>Safety &amp; Law</option><option>Banking</option><option>Telco</option>
+          <option>Property</option><option>General</option>
+        </select>
+      </div>
+      <div class="form-group"><label>Tags (comma separated)</label><input type="text" id="edit-tags"></div>
+    </div>
+    <div class="modal-footer">
+      <button class="btn btn-secondary" onclick="closeModal('edit-modal')">Cancel</button>
+      <button class="btn btn-primary" onclick="saveArticle()">Save Changes</button>
+    </div>
+  </div>
+</div>
+
+<!-- Sponsored Modal -->
+<div class="modal-overlay" id="sponsored-modal">
+  <div class="modal">
+    <div class="modal-header">
+      <h3 id="sponsored-modal-title">New Sponsored Listing</h3>
+      <button class="close-btn" onclick="closeModal('sponsored-modal')">×</button>
+    </div>
+    <div class="modal-body">
+      <input type="hidden" id="sp-id">
+      <div class="form-row">
+        <div class="form-group"><label>Company Name *</label><input type="text" id="sp-company"></div>
+        <div class="form-group"><label>Contact Email</label><input type="text" id="sp-contact"></div>
+      </div>
+      <div class="form-group"><label>Headline *</label><input type="text" id="sp-headline"></div>
+      <div class="form-group"><label>Body Copy</label><textarea id="sp-body"></textarea></div>
+      <div class="form-row">
+        <div class="form-group"><label>CTA Text</label><input type="text" id="sp-cta-text" value="Learn More"></div>
+        <div class="form-group"><label>CTA URL *</label><input type="url" id="sp-cta-url"></div>
+      </div>
+      <div class="form-row">
+        <div class="form-group"><label>Tier</label>
+          <select id="sp-tier">
+            <option value="sponsored">Sponsored (S$199/week)</option>
+            <option value="brand_release">Brand Release (S$499/release)</option>
+            <option value="brand_partner">Brand Partner (S$999/month)</option>
+          </select>
+        </div>
+        <div class="form-group"><label>Status</label>
+          <select id="sp-status">
+            <option value="pending">Pending</option>
+            <option value="active">Active</option>
+            <option value="paused">Paused</option>
+            <option value="expired">Expired</option>
+          </select>
+        </div>
+      </div>
+      <div class="form-row">
+        <div class="form-group"><label>Start Date</label><input type="date" id="sp-starts"></div>
+        <div class="form-group"><label>End Date</label><input type="date" id="sp-ends"></div>
+      </div>
+    </div>
+    <div class="modal-footer">
+      <button class="btn btn-secondary" onclick="closeModal('sponsored-modal')">Cancel</button>
+      <button class="btn btn-primary" onclick="saveSponsored()">Save Listing</button>
+    </div>
+  </div>
+</div>
+
+<div id="toast"></div>
+
+<script>
+const creds = btoa('admin:' + prompt('Admin password:', ''));
+
+async function api(path, opts = {}) {
+  const r = await fetch(path, {
+    headers: { 'Authorization': 'Basic ' + creds, 'Content-Type': 'application/json', ...opts.headers },
+    ...opts,
+  });
+  if (!r.ok) throw new Error(await r.text());
+  return r.json();
+}
+
+function toast(msg, err = false) {
+  const t = document.getElementById('toast');
+  t.textContent = msg;
+  t.style.background = err ? '#dc2626' : '#1a2744';
+  t.classList.add('show');
+  setTimeout(() => t.classList.remove('show'), 2500);
+}
+
+// ── Navigation ──────────────────────────────────────────────────────────────
+
+const titles = { dashboard: 'Dashboard', articles: 'Articles', sponsored: 'Sponsored Listings', scraper: 'Scraper' };
+
+document.querySelectorAll('.nav-item').forEach(el => {
+  el.addEventListener('click', () => {
+    document.querySelectorAll('.nav-item').forEach(n => n.classList.remove('active'));
+    document.querySelectorAll('.page').forEach(p => p.classList.remove('active'));
+    el.classList.add('active');
+    const pg = el.dataset.page;
+    document.getElementById('page-' + pg).classList.add('active');
+    document.getElementById('page-title').textContent = titles[pg];
+    if (pg === 'dashboard') loadDashboard();
+    if (pg === 'articles')  loadArticles();
+    if (pg === 'sponsored') loadSponsored();
+    if (pg === 'scraper')   pollLog();
+  });
+});
+
+// ── Dashboard ────────────────────────────────────────────────────────────────
+
+async function loadDashboard() {
+  try {
+    const [stats, sources] = await Promise.all([api('/api/stats'), api('/api/sources')]);
+    document.getElementById('s-total').textContent = stats.total;
+    document.getElementById('s-today').textContent = stats.today;
+    document.getElementById('s-govt').textContent  = stats.government;
+    document.getElementById('s-corp').textContent  = stats.corporate;
+    document.getElementById('s-ai').textContent    = stats.rewritten;
+
+    const tbody = document.getElementById('sources-tbody');
+    tbody.innerHTML = sources.map(s => `
+      <tr>
+        <td><strong>${esc(s.source_name)}</strong></td>
+        <td><span class="badge ${s.source_type === 'government' ? 'badge-gov' : 'badge-corp'}">${esc(s.source_type)}</span></td>
+        <td>${esc(s.category)}</td>
+        <td>${s.count}</td>
+        <td style="color:var(--muted);font-size:12px">${s.latest ? new Date(s.latest).toLocaleDateString('en-SG') : '—'}</td>
+      </tr>`).join('');
+  } catch(e) { toast('Failed to load dashboard', true); }
+}
+
+// ── Articles ─────────────────────────────────────────────────────────────────
+
+let artOffset = 0, artTotal = 0;
+const PAGE_SIZE = 30;
+
+async function loadArticles(offset = 0) {
+  artOffset = offset;
+  const q = document.getElementById('article-search').value.trim();
+  try {
+    const { articles, total } = await api(`/api/admin/articles?limit=${PAGE_SIZE}&offset=${offset}${q ? '&q='+encodeURIComponent(q) : ''}`);
+    artTotal = total;
+    document.getElementById('article-count').textContent = `${total} total`;
+    const tbody = document.getElementById('articles-tbody');
+    tbody.innerHTML = articles.length ? articles.map(a => `
+      <tr>
+        <td style="color:var(--muted)">${a.id}</td>
+        <td class="truncate"><a href="${esc(a.source_url)}" target="_blank">${esc(a.title)}</a></td>
+        <td>${esc(a.source_name)}</td>
+        <td>${esc(a.category)}</td>
+        <td><span class="badge ${a.source_type === 'government' ? 'badge-gov' : 'badge-corp'}">${a.source_type === 'government' ? 'Govt' : 'Corp'}</span></td>
+        <td style="font-size:12px;color:var(--muted)">${new Date(a.published_at).toLocaleDateString('en-SG')}</td>
+        <td style="white-space:nowrap">
+          <button class="btn btn-secondary btn-sm" onclick='openEditModal(${JSON.stringify(a)})'>Edit</button>
+          <button class="btn btn-danger btn-sm" onclick="delArticle(${a.id})">Del</button>
+        </td>
+      </tr>`).join('')
+    : '<tr><td colspan="7" style="text-align:center;color:var(--muted);padding:20px">No articles found</td></tr>';
+
+    renderPagination();
+  } catch(e) { toast('Failed to load articles', true); }
+}
+
+function searchArticles() { loadArticles(0); }
+
+function renderPagination() {
+  const pages = Math.ceil(artTotal / PAGE_SIZE);
+  const cur   = Math.floor(artOffset / PAGE_SIZE);
+  const el    = document.getElementById('article-pagination');
+  if (pages <= 1) { el.innerHTML = ''; return; }
+  let html = `<button class="page-btn" onclick="loadArticles(${(cur-1)*PAGE_SIZE})" ${cur===0?'disabled':''}>← Prev</button>`;
+  for (let i = Math.max(0,cur-2); i <= Math.min(pages-1,cur+2); i++) {
+    html += `<button class="page-btn ${i===cur?'active':''}" onclick="loadArticles(${i*PAGE_SIZE})">${i+1}</button>`;
+  }
+  html += `<button class="page-btn" onclick="loadArticles(${(cur+1)*PAGE_SIZE})" ${cur>=pages-1?'disabled':''}>Next →</button>`;
+  el.innerHTML = html;
+}
+
+function openEditModal(a) {
+  document.getElementById('edit-id').value    = a.id;
+  document.getElementById('edit-title').value = a.title;
+  document.getElementById('edit-lede').value  = a.lede || '';
+  document.getElementById('edit-category').value = a.category;
+  const tags = a.tags ? (typeof a.tags === 'string' ? JSON.parse(a.tags) : a.tags) : [];
+  document.getElementById('edit-tags').value  = tags.join(', ');
+  document.getElementById('edit-modal').classList.add('open');
+}
+
+async function saveArticle() {
+  const id = parseInt(document.getElementById('edit-id').value);
+  const tagsRaw = document.getElementById('edit-tags').value;
+  const tags = tagsRaw.split(',').map(t => t.trim()).filter(Boolean);
+  try {
+    await api(`/api/admin/articles/${id}`, {
+      method: 'PATCH',
+      body: JSON.stringify({
+        title:    document.getElementById('edit-title').value,
+        lede:     document.getElementById('edit-lede').value,
+        category: document.getElementById('edit-category').value,
+        tags:     JSON.stringify(tags),
+      }),
+    });
+    toast('Article saved');
+    closeModal('edit-modal');
+    loadArticles(artOffset);
+  } catch(e) { toast('Save failed', true); }
+}
+
+async function delArticle(id) {
+  if (!confirm('Delete this article?')) return;
+  try {
+    await api(`/api/admin/articles/${id}`, { method: 'DELETE' });
+    toast('Deleted');
+    loadArticles(artOffset);
+  } catch(e) { toast('Delete failed', true); }
+}
+
+// ── Sponsored ────────────────────────────────────────────────────────────────
+
+async function loadSponsored() {
+  try {
+    const listings = await api('/api/admin/sponsored');
+    const tbody = document.getElementById('sponsored-tbody');
+    tbody.innerHTML = listings.length ? listings.map(s => `
+      <tr>
+        <td><strong>${esc(s.company)}</strong><br><span style="font-size:11px;color:var(--muted)">${esc(s.contact)}</span></td>
+        <td class="truncate">${esc(s.headline)}</td>
+        <td style="font-size:12px">${tierLabel(s.tier)}</td>
+        <td><span class="badge badge-${s.status}">${s.status}</span></td>
+        <td style="font-size:11px;color:var(--muted)">${s.starts_at ? s.starts_at.slice(0,10) : '—'} → ${s.ends_at ? s.ends_at.slice(0,10) : '—'}</td>
+        <td style="white-space:nowrap">
+          <button class="btn btn-secondary btn-sm" onclick='openSponsoredModal(${JSON.stringify(s)})'>Edit</button>
+          <button class="btn btn-green btn-sm" onclick="setSpStatus(${s.id},'active')">Activate</button>
+          <button class="btn btn-danger btn-sm" onclick="delSponsored(${s.id})">Del</button>
+        </td>
+      </tr>`).join('')
+    : '<tr><td colspan="6" style="text-align:center;color:var(--muted);padding:20px">No listings yet. Create one above.</td></tr>';
+  } catch(e) { toast('Failed to load listings', true); }
+}
+
+function tierLabel(t) {
+  return { sponsored: 'Sponsored S$199/wk', brand_release: 'Brand Release S$499', brand_partner: 'Partner S$999/mo' }[t] || t;
+}
+
+function openSponsoredModal(s = null) {
+  document.getElementById('sponsored-modal-title').textContent = s ? 'Edit Listing' : 'New Sponsored Listing';
+  document.getElementById('sp-id').value       = s ? s.id : '';
+  document.getElementById('sp-company').value  = s ? s.company : '';
+  document.getElementById('sp-contact').value  = s ? s.contact : '';
+  document.getElementById('sp-headline').value = s ? s.headline : '';
+  document.getElementById('sp-body').value     = s ? s.body : '';
+  document.getElementById('sp-cta-text').value = s ? s.cta_text : 'Learn More';
+  document.getElementById('sp-cta-url').value  = s ? s.cta_url : '';
+  document.getElementById('sp-tier').value     = s ? s.tier : 'sponsored';
+  document.getElementById('sp-status').value   = s ? s.status : 'pending';
+  document.getElementById('sp-starts').value   = s && s.starts_at ? s.starts_at.slice(0,10) : '';
+  document.getElementById('sp-ends').value     = s && s.ends_at ? s.ends_at.slice(0,10) : '';
+  document.getElementById('sponsored-modal').classList.add('open');
+}
+
+async function saveSponsored() {
+  const id = document.getElementById('sp-id').value;
+  const body = {
+    company:  document.getElementById('sp-company').value,
+    contact:  document.getElementById('sp-contact').value,
+    headline: document.getElementById('sp-headline').value,
+    body:     document.getElementById('sp-body').value,
+    cta_text: document.getElementById('sp-cta-text').value,
+    cta_url:  document.getElementById('sp-cta-url').value,
+    tier:     document.getElementById('sp-tier').value,
+    status:   document.getElementById('sp-status').value,
+    starts_at: document.getElementById('sp-starts').value || null,
+    ends_at:   document.getElementById('sp-ends').value || null,
+  };
+  try {
+    if (id) {
+      await api(`/api/admin/sponsored/${id}`, { method: 'PATCH', body: JSON.stringify(body) });
+    } else {
+      await api('/api/admin/sponsored', { method: 'POST', body: JSON.stringify(body) });
+    }
+    toast('Listing saved');
+    closeModal('sponsored-modal');
+    loadSponsored();
+  } catch(e) { toast('Save failed', true); }
+}
+
+async function setSpStatus(id, status) {
+  try {
+    await api(`/api/admin/sponsored/${id}`, { method: 'PATCH', body: JSON.stringify({ status }) });
+    toast(`Listing set to ${status}`);
+    loadSponsored();
+  } catch(e) { toast('Update failed', true); }
+}
+
+async function delSponsored(id) {
+  if (!confirm('Delete this listing?')) return;
+  try {
+    await api(`/api/admin/sponsored/${id}`, { method: 'DELETE' });
+    toast('Deleted');
+    loadSponsored();
+  } catch(e) { toast('Delete failed', true); }
+}
+
+// ── Scraper ──────────────────────────────────────────────────────────────────
+
+let logPoll = null;
+
+async function triggerScrape() {
+  try {
+    await api('/api/admin/scrape', { method: 'POST' });
+    toast('Scrape started');
+    // Switch to scraper tab if not there
+    document.querySelector('[data-page="scraper"]').click();
+    startLogPolling();
+  } catch(e) { toast('Scrape failed to start', true); }
+}
+
+function startLogPolling() {
+  if (logPoll) clearInterval(logPoll);
+  logPoll = setInterval(pollLog, 2000);
+}
+
+async function pollLog() {
+  try {
+    const { running, log } = await api('/api/admin/scrape/log');
+    const pulse  = document.getElementById('scrape-pulse');
+    const status = document.getElementById('scrape-status');
+    pulse.className  = 'pulse' + (running ? ' running' : '');
+    status.textContent = running ? 'Running…' : 'Idle';
+    if (!running && logPoll) { clearInterval(logPoll); logPoll = null; }
+
+    const box = document.getElementById('scrape-log');
+    if (log.length) {
+      box.innerHTML = log.map(l =>
+        `<span class="${l.level}">${esc(l.msg)}</span>`
+      ).join('\n');
+      box.scrollTop = box.scrollHeight;
+    }
+  } catch(_) {}
+}
+
+function clearLog() {
+  document.getElementById('scrape-log').textContent = 'Log cleared.';
+}
+
+// ── Helpers ──────────────────────────────────────────────────────────────────
+
+function closeModal(id) { document.getElementById(id).classList.remove('open'); }
+function esc(s) { return String(s||'').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;'); }
+
+// Close modals on overlay click
+document.querySelectorAll('.modal-overlay').forEach(el => {
+  el.addEventListener('click', e => { if (e.target === el) el.classList.remove('open'); });
+});
+
+// Init
+loadDashboard();
+</script>
+</body>
+</html>
