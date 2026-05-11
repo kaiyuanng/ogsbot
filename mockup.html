@@ -554,6 +554,260 @@
     }
     .latest-link:hover { text-decoration: underline; }
 
+    /* ── SPONSORED CARD ── */
+    .card.sponsored {
+      background: #fffbf0;
+      border: 1.5px solid #e8d88a;
+      border-radius: 6px;
+      padding: 16px !important;
+      margin: 0;
+    }
+    .card.sponsored:hover .card-title { color: #9a6f00; }
+    .sponsored-bar {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      margin-bottom: 10px;
+    }
+    .sponsored-label {
+      font-size: 9px;
+      font-weight: 700;
+      letter-spacing: 1.2px;
+      text-transform: uppercase;
+      color: #9a6f00;
+      background: #fef3c7;
+      border: 1px solid #e8d88a;
+      padding: 2px 7px;
+      border-radius: 3px;
+    }
+    .advertiser-name {
+      font-size: 10px;
+      font-weight: 600;
+      color: #9a6f00;
+    }
+    .card.sponsored .card-img {
+      border-radius: 4px;
+      margin-bottom: 10px;
+    }
+    .card.sponsored .card-title { color: #1a1a1a; }
+    .sponsored-cta {
+      display: inline-block;
+      margin-top: 10px;
+      background: #9a6f00;
+      color: #fff;
+      font-size: 11px;
+      font-weight: 600;
+      padding: 6px 12px;
+      border-radius: 3px;
+      font-family: var(--sans);
+    }
+    .sponsored-cta:hover { background: #7a5800; }
+
+    /* ── BRAND RELEASE CARD ── */
+    .card.brand-release {
+      background: #f5f8ff;
+      border: 1.5px solid #b8caee;
+      border-radius: 6px;
+      padding: 16px !important;
+      margin: 0;
+    }
+    .card.brand-release:hover .card-title { color: var(--navy); }
+    .brand-bar {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      margin-bottom: 10px;
+    }
+    .brand-label {
+      font-size: 9px;
+      font-weight: 700;
+      letter-spacing: 1.2px;
+      text-transform: uppercase;
+      color: var(--navy);
+      background: #dce6f8;
+      border: 1px solid #b8caee;
+      padding: 2px 7px;
+      border-radius: 3px;
+    }
+    .brand-name {
+      font-size: 10px;
+      font-weight: 700;
+      color: var(--navy);
+    }
+
+    /* ── PRICING SECTION ── */
+    .pricing-section {
+      background: var(--navy);
+      padding: 48px 32px;
+      margin-bottom: 0;
+    }
+    .pricing-inner {
+      max-width: 1200px;
+      margin: 0 auto;
+    }
+    .pricing-header {
+      text-align: center;
+      margin-bottom: 36px;
+    }
+    .pricing-eyebrow {
+      font-size: 11px;
+      font-weight: 700;
+      letter-spacing: 1.5px;
+      text-transform: uppercase;
+      color: var(--red);
+      margin-bottom: 10px;
+    }
+    .pricing-title {
+      font-family: var(--serif);
+      font-size: 28px;
+      font-weight: 700;
+      color: #fff;
+      margin-bottom: 10px;
+    }
+    .pricing-sub {
+      font-size: 14px;
+      color: rgba(255,255,255,0.55);
+    }
+    .pricing-grid {
+      display: grid;
+      grid-template-columns: repeat(3, 1fr);
+      gap: 20px;
+    }
+    .pricing-card {
+      background: rgba(255,255,255,0.06);
+      border: 1px solid rgba(255,255,255,0.12);
+      border-radius: 8px;
+      padding: 28px 24px;
+      display: flex;
+      flex-direction: column;
+      gap: 16px;
+      transition: border-color .15s;
+    }
+    .pricing-card:hover { border-color: rgba(255,255,255,0.3); }
+    .pricing-card.featured {
+      background: var(--red);
+      border-color: var(--red);
+    }
+    .pricing-tier {
+      font-size: 10px;
+      font-weight: 700;
+      letter-spacing: 1.5px;
+      text-transform: uppercase;
+      color: rgba(255,255,255,0.6);
+    }
+    .pricing-card.featured .pricing-tier { color: rgba(255,255,255,0.8); }
+    .pricing-price {
+      display: flex;
+      align-items: baseline;
+      gap: 4px;
+    }
+    .price-currency { font-size: 16px; font-weight: 700; color: #fff; margin-top: 4px; }
+    .price-amount { font-size: 40px; font-weight: 800; color: #fff; line-height: 1; font-family: var(--sans); }
+    .price-period { font-size: 12px; color: rgba(255,255,255,0.5); }
+    .pricing-name {
+      font-family: var(--serif);
+      font-size: 18px;
+      font-weight: 700;
+      color: #fff;
+    }
+    .pricing-desc {
+      font-size: 12px;
+      color: rgba(255,255,255,0.55);
+      line-height: 1.6;
+    }
+    .pricing-features {
+      list-style: none;
+      display: flex;
+      flex-direction: column;
+      gap: 8px;
+      flex: 1;
+    }
+    .pricing-features li {
+      font-size: 12px;
+      color: rgba(255,255,255,0.75);
+      display: flex;
+      align-items: flex-start;
+      gap: 8px;
+    }
+    .pricing-features li::before { content: '✓'; color: var(--red); font-weight: 700; flex-shrink: 0; }
+    .pricing-card.featured .pricing-features li::before { color: #fff; }
+    .pricing-btn {
+      display: block;
+      text-align: center;
+      background: rgba(255,255,255,0.15);
+      color: #fff;
+      font-size: 13px;
+      font-weight: 600;
+      padding: 11px;
+      border-radius: 5px;
+      transition: background .15s;
+      font-family: var(--sans);
+      border: 1px solid rgba(255,255,255,0.2);
+      cursor: pointer;
+    }
+    .pricing-btn:hover { background: rgba(255,255,255,0.25); }
+    .pricing-card.featured .pricing-btn {
+      background: #fff;
+      color: var(--red);
+      border-color: #fff;
+    }
+    .pricing-card.featured .pricing-btn:hover { background: #f0f0f0; }
+
+    /* ── SUBMIT CTA STRIP ── */
+    .submit-strip {
+      background: #fffbf0;
+      border-top: 2px solid #e8d88a;
+      border-bottom: 2px solid #e8d88a;
+      padding: 20px 32px;
+    }
+    .submit-inner {
+      max-width: 1200px;
+      margin: 0 auto;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 24px;
+    }
+    .submit-text h3 {
+      font-family: var(--serif);
+      font-size: 18px;
+      font-weight: 700;
+      color: #7a5800;
+      margin-bottom: 4px;
+    }
+    .submit-text p { font-size: 13px; color: #9a7820; }
+    .submit-actions { display: flex; gap: 10px; flex-shrink: 0; }
+    .submit-btn-primary {
+      background: #9a6f00;
+      color: #fff;
+      font-size: 13px;
+      font-weight: 600;
+      padding: 10px 20px;
+      border-radius: 4px;
+      white-space: nowrap;
+      font-family: var(--sans);
+      cursor: pointer;
+    }
+    .submit-btn-primary:hover { background: #7a5800; }
+    .submit-btn-secondary {
+      background: transparent;
+      color: #9a6f00;
+      font-size: 13px;
+      font-weight: 600;
+      padding: 10px 20px;
+      border-radius: 4px;
+      border: 1px solid #e8d88a;
+      white-space: nowrap;
+      font-family: var(--sans);
+      cursor: pointer;
+    }
+    .submit-btn-secondary:hover { background: #fef3c7; }
+
+    @media (max-width: 768px) {
+      .pricing-grid { grid-template-columns: 1fr; }
+      .submit-inner { flex-direction: column; align-items: flex-start; }
+    }
+
     /* ── HOW IT WORKS STRIP ── */
     .how-strip {
       background: var(--navy);
@@ -727,6 +981,7 @@
         <span style="color:var(--muted-light);font-size:14px">⌕</span>
         <input type="text" placeholder="Search press releases…" />
       </div>
+      <a href="#pricing" style="background:var(--surface);border:1px solid var(--border-dark);color:var(--navy);font-size:12px;font-weight:600;padding:8px 14px;border-radius:4px;font-family:var(--sans)">Advertise</a>
       <button class="subscribe-btn">📬 Get Alerts</button>
     </div>
   </div>
@@ -878,6 +1133,20 @@
   </div>
 </div>
 
+<!-- SUBMIT CTA STRIP -->
+<div class="submit-strip">
+  <div class="submit-inner">
+    <div class="submit-text">
+      <h3>📣 Reach Singaporeans when it matters most</h3>
+      <p>Publish a sponsored post, promote an event, or submit your brand's press release — we'll rewrite it in plain English and distribute it to our audience.</p>
+    </div>
+    <div class="submit-actions">
+      <a href="#pricing" class="submit-btn-primary">Submit a Press Release</a>
+      <a href="#pricing" class="submit-btn-secondary">View Pricing →</a>
+    </div>
+  </div>
+</div>
+
 <!-- HOW IT WORKS -->
 <div class="how-strip">
   <div class="how-inner">
@@ -924,15 +1193,16 @@
     </div>
   </div>
 
-  <div class="card">
-    <div class="card-img ci-2">♻️</div>
-    <div class="card-agency">NEA — Environment</div>
-    <div class="card-title">Mandatory beverage container return scheme to launch island-wide in July 2026</div>
-    <div class="card-summary">NEA confirmed the Reverse Vending Machine network will cover all 26 HDB towns and major malls by July. Consumers get 10 cents back per eligible plastic bottle or aluminium can returned.</div>
-    <div class="card-footer">
-      <span class="card-time">Today, 9:45 AM</span>
-      <a href="#" class="card-source-link">Original →</a>
+  <!-- SPONSORED CARD -->
+  <div class="card sponsored">
+    <div class="sponsored-bar">
+      <span class="sponsored-label">Sponsored</span>
+      <span class="advertiser-name">DBS Bank</span>
     </div>
+    <div class="card-img ci-4" style="height:110px">🏦</div>
+    <div class="card-title">New BTO launch? DBS's HDB loan calculator shows your exact monthly payments in 30 seconds</div>
+    <div class="card-summary" style="font-size:12px;color:var(--muted)">With May 2026 BTO applications open, DBS is offering fixed-rate HDB loans from 2.6% p.a. Use the free calculator to plan before you ballot.</div>
+    <a href="#" class="sponsored-cta">Calculate now →</a>
   </div>
 
   <div class="card">
@@ -944,6 +1214,49 @@
       <span class="card-time">Today, 8:15 AM</span>
       <a href="#" class="card-source-link">Original →</a>
     </div>
+  </div>
+</div>
+
+<!-- BRAND RELEASE EXAMPLE -->
+<hr class="section-rule" />
+<div class="section-head">
+  <div class="section-title"><span class="red-bar"></span> Brand Releases</div>
+  <a href="#pricing" class="see-all">Publish your release →</a>
+</div>
+<div class="cards-grid" style="margin-bottom:40px">
+  <div class="card brand-release">
+    <div class="brand-bar">
+      <span class="brand-label">Brand Release</span>
+      <span class="brand-name">PropertyGuru</span>
+    </div>
+    <div class="card-img ci-5" style="height:110px">🏡</div>
+    <div class="card-title">PropertyGuru launches AI-powered valuation tool for all Singapore HDB and condo listings</div>
+    <div class="card-summary">PropertyGuru's new InstantVal tool uses machine learning trained on 10 years of SG transaction data to generate real-time valuations, helping buyers negotiate and sellers price accurately.</div>
+    <div class="card-footer">
+      <span class="card-time">Today, 11:00 AM</span>
+      <span style="font-size:10px;color:var(--navy);font-weight:600">Brand Release</span>
+    </div>
+  </div>
+
+  <div class="card brand-release">
+    <div class="brand-bar">
+      <span class="brand-label">Brand Release</span>
+      <span class="brand-name">Singtel</span>
+    </div>
+    <div class="card-img ci-6" style="height:110px">📡</div>
+    <div class="card-title">Singtel's new 5G home broadband plan offers 2Gbps speeds with no contract lock-in</div>
+    <div class="card-summary">Timed alongside IMDA's broadband blueprint announcement, Singtel has launched a no-contract 5G home broadband plan at $49/month, available to all Singapore addresses from 1 June 2026.</div>
+    <div class="card-footer">
+      <span class="card-time">Today, 10:00 AM</span>
+      <span style="font-size:10px;color:var(--navy);font-weight:600">Brand Release</span>
+    </div>
+  </div>
+
+  <div class="card" style="background:var(--surface);border:2px dashed var(--border-dark);display:flex;flex-direction:column;align-items:center;justify-content:center;text-align:center;gap:12px;min-height:260px;padding:24px!important;border-right:2px dashed var(--border-dark)">
+    <div style="font-size:32px">📤</div>
+    <div style="font-family:var(--serif);font-size:16px;font-weight:700;color:var(--muted)">Publish your brand's press release here</div>
+    <div style="font-size:12px;color:var(--muted-light);line-height:1.6">We rewrite it in plain English and publish it to thousands of Singapore readers</div>
+    <a href="#pricing" style="background:var(--navy);color:#fff;font-size:12px;font-weight:600;padding:8px 18px;border-radius:4px;font-family:var(--sans)">See pricing →</a>
   </div>
 </div>
 
@@ -1018,6 +1331,85 @@
       <div class="latest-title">PSLE scoring framework changes from 2027: shift to descriptive grade bands</div>
     </div>
     <a href="#" class="latest-link">Original release →</a>
+  </div>
+</div>
+
+<!-- PRICING -->
+<div class="pricing-section" id="pricing">
+  <div class="pricing-inner">
+    <div class="pricing-header">
+      <div class="pricing-eyebrow">Advertise & Publish</div>
+      <div class="pricing-title">Reach Singaporeans at the right moment</div>
+      <div class="pricing-sub">Your message alongside government news that your audience is already reading</div>
+    </div>
+
+    <div class="pricing-grid">
+      <!-- Sponsored Listing -->
+      <div class="pricing-card">
+        <div class="pricing-tier">Sponsored Listing</div>
+        <div class="pricing-price">
+          <span class="price-currency">S$</span>
+          <span class="price-amount">199</span>
+          <span class="price-period">/ week</span>
+        </div>
+        <div class="pricing-name">Promoted Post</div>
+        <div class="pricing-desc">Place a native sponsored card in the feed. Ideal for events, product launches, and time-sensitive offers.</div>
+        <ul class="pricing-features">
+          <li>Native card in the main feed</li>
+          <li>Clearly labeled "Sponsored"</li>
+          <li>Targeted by category (e.g. Housing, Health)</li>
+          <li>Your headline, copy, and CTA link</li>
+          <li>7-day run, live within 24 hours</li>
+        </ul>
+        <a href="#" class="pricing-btn">Get started →</a>
+      </div>
+
+      <!-- Brand Press Release — FEATURED -->
+      <div class="pricing-card featured">
+        <div class="pricing-tier">Brand Press Release</div>
+        <div class="pricing-price">
+          <span class="price-currency">S$</span>
+          <span class="price-amount">499</span>
+          <span class="price-period">/ release</span>
+        </div>
+        <div class="pricing-name">Pro Publish</div>
+        <div class="pricing-desc">Submit your press release — we rewrite it in plain English and publish it as a full article with your brand byline.</div>
+        <ul class="pricing-features">
+          <li>AI rewrite into a full news article</li>
+          <li>Published with "Brand Release" label</li>
+          <li>Featured in feed for 7 days</li>
+          <li>Permanent archive page + SEO</li>
+          <li>Shareable URL for your PR team</li>
+          <li>Telegram channel mention</li>
+        </ul>
+        <a href="#" class="pricing-btn">Submit a release →</a>
+      </div>
+
+      <!-- Premium Bundle -->
+      <div class="pricing-card">
+        <div class="pricing-tier">Premium Bundle</div>
+        <div class="pricing-price">
+          <span class="price-currency">S$</span>
+          <span class="price-amount">999</span>
+          <span class="price-period">/ month</span>
+        </div>
+        <div class="pricing-name">Brand Partner</div>
+        <div class="pricing-desc">Ongoing presence for brands that want to stay top-of-mind. Best for financial, property, and healthcare brands.</div>
+        <ul class="pricing-features">
+          <li>4 brand press releases per month</li>
+          <li>2 sponsored posts per month</li>
+          <li>Logo in agency filter bar</li>
+          <li>Dedicated brand archive page</li>
+          <li>Monthly readership report</li>
+          <li>Priority 4-hour turnaround</li>
+        </ul>
+        <a href="#" class="pricing-btn">Contact us →</a>
+      </div>
+    </div>
+
+    <div style="text-align:center;margin-top:28px;font-size:12px;color:rgba(255,255,255,0.4)">
+      All prices in SGD · Invoice provided · Contact us for custom packages and agency rates
+    </div>
   </div>
 </div>
 
