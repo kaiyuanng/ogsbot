@@ -1,0 +1,513 @@
+<!DOCTYPE html>
+<html lang="en-SG">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>pressrelease.sg — Singapore News in Plain English</title>
+  <meta name="description" content="News Singaporeans care about, straight from the source. Press releases from government agencies, banks, telcos, and major organisations — rewritten in plain English." />
+  <meta name="robots" content="index, follow" />
+  <link rel="canonical" href="https://pressrelease.sg/" />
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Playfair+Display:wght@400;600;700;800&family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet" />
+  <style>
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+    :root {
+      --red: #C8102E; --red-dark: #a00d24; --navy: #1a2744;
+      --bg: #fff; --surface: #f7f6f4; --border: #e8e6e2; --border-dark: #d0cdc8;
+      --text: #1a1a1a; --muted: #5a5a5a; --muted-light: #999;
+      --serif: 'Playfair Display', Georgia, serif; --sans: 'Inter', system-ui, sans-serif;
+    }
+    body { background: var(--bg); color: var(--text); font-family: var(--sans); font-size: 15px; line-height: 1.6; }
+    a { text-decoration: none; color: inherit; }
+
+    /* Top bar */
+    .top-bar { background: var(--navy); color: rgba(255,255,255,.75); font-size: 11px; padding: 7px 32px; display: flex; justify-content: space-between; align-items: center; }
+    .top-bar-left { display: flex; gap: 16px; align-items: center; }
+    .gov-badge { background: rgba(255,255,255,.12); border: 1px solid rgba(255,255,255,.2); border-radius: 3px; padding: 2px 8px; font-size: 10px; font-weight: 600; }
+    #stat-today { font-weight: 700; color: #fff; }
+
+    /* Masthead */
+    .masthead { border-bottom: 1px solid var(--border); padding: 0 32px; }
+    .masthead-inner { max-width: 1200px; margin: 0 auto; display: flex; align-items: center; justify-content: space-between; padding: 20px 0 16px; gap: 16px; }
+    .logo-name { font-family: var(--sans); font-size: 26px; font-weight: 700; letter-spacing: -.5px; }
+    .logo-name .dot { color: var(--red); }
+    .logo-sub { font-size: 11px; color: var(--muted); margin-top: 2px; }
+    .search-box { display: flex; align-items: center; border: 1px solid var(--border-dark); border-radius: 4px; padding: 8px 12px; gap: 8px; background: var(--surface); }
+    .search-box input { background: none; border: none; outline: none; color: var(--text); font-size: 13px; width: 200px; font-family: var(--sans); }
+    .search-box input::placeholder { color: var(--muted-light); }
+
+    /* Nav */
+    nav { background: var(--bg); border-bottom: 3px solid var(--red); position: sticky; top: 0; z-index: 100; box-shadow: 0 2px 8px rgba(0,0,0,.06); }
+    .nav-inner { max-width: 1200px; margin: 0 auto; padding: 0 32px; display: flex; overflow-x: auto; scrollbar-width: none; }
+    .nav-inner::-webkit-scrollbar { display: none; }
+    .nav-item { font-size: 12px; font-weight: 600; color: var(--muted); padding: 11px 14px; white-space: nowrap; cursor: pointer; border-bottom: 3px solid transparent; margin-bottom: -3px; transition: color .15s, border-color .15s; }
+    .nav-item:hover { color: var(--text); }
+    .nav-item.active { color: var(--red); border-bottom-color: var(--red); }
+
+    /* Ticker */
+    .ticker { background: var(--red); padding: 7px 0; overflow: hidden; white-space: nowrap; }
+    .ticker-label { display: inline-block; background: rgba(0,0,0,.2); color: #fff; font-size: 9px; font-weight: 700; letter-spacing: 1.5px; text-transform: uppercase; padding: 2px 10px; margin: 0 16px 0 32px; vertical-align: middle; border-radius: 2px; }
+    .ticker-inner { display: inline-flex; gap: 48px; animation: scroll 40s linear infinite; }
+    @keyframes scroll { 0%{transform:translateX(0)} 100%{transform:translateX(-50%)} }
+    .ticker-item { font-size: 12px; color: rgba(255,255,255,.9); vertical-align: middle; }
+    .ticker-agency { font-weight: 700; color: #fff; margin-right: 4px; }
+
+    /* Container */
+    .container { max-width: 1200px; margin: 0 auto; padding: 0 32px; }
+
+    /* Agency filter */
+    .agency-filter { background: var(--surface); border-bottom: 1px solid var(--border); padding: 12px 32px; }
+    .filter-inner { max-width: 1200px; margin: 0 auto; display: flex; align-items: center; gap: 8px; flex-wrap: wrap; }
+    .filter-label { font-size: 10px; font-weight: 700; letter-spacing: 1px; text-transform: uppercase; color: var(--muted); flex-shrink: 0; }
+    .filter-chip { background: var(--bg); border: 1px solid var(--border-dark); border-radius: 3px; padding: 4px 10px; font-size: 11px; font-weight: 600; color: var(--muted); cursor: pointer; transition: all .15s; }
+    .filter-chip:hover { border-color: var(--navy); color: var(--navy); }
+    .filter-chip.active { background: var(--navy); border-color: var(--navy); color: #fff; }
+
+    /* Section */
+    .section-rule { max-width: 1200px; margin: 0 auto 20px; padding: 0 32px; border: none; border-top: 2px solid var(--text); }
+    .section-head { max-width: 1200px; margin: 0 auto 20px; padding: 0 32px; display: flex; align-items: baseline; justify-content: space-between; }
+    .section-title { font-family: var(--serif); font-size: 20px; font-weight: 800; display: flex; align-items: center; gap: 10px; }
+    .red-bar { display: inline-block; width: 4px; height: 22px; background: var(--red); border-radius: 2px; }
+    .section-count { font-size: 11px; color: var(--muted-light); }
+
+    /* Grid */
+    .cards-grid { max-width: 1200px; margin: 0 auto 40px; padding: 0 32px; display: grid; grid-template-columns: repeat(3, 1fr); gap: 0; }
+    .card { padding: 0 20px 24px 0; border-right: 1px solid var(--border); cursor: pointer; }
+    .card:last-child { border-right: none; padding-right: 0; }
+    .card:nth-child(n+2) { padding-left: 20px; }
+    .card:hover .card-title { color: var(--red); }
+    .card-img { width: 100%; height: 120px; border-radius: 2px; display: flex; align-items: center; justify-content: center; font-size: 28px; margin-bottom: 12px; background: linear-gradient(135deg, #f0ece6, #e8e0d6); }
+    .card-agency-badge { display: inline-flex; align-items: center; gap: 4px; background: var(--surface); border: 1px solid var(--border); font-size: 9px; font-weight: 700; color: var(--navy); padding: 2px 6px; border-radius: 2px; margin-bottom: 8px; text-transform: uppercase; letter-spacing: .5px; }
+    .card-type-dot { width: 5px; height: 5px; border-radius: 50%; background: var(--red); }
+    .card-title { font-family: var(--serif); font-size: 15px; font-weight: 700; line-height: 1.4; margin-bottom: 8px; transition: color .15s; }
+    .card-lede { font-size: 12px; color: var(--muted); line-height: 1.65; margin-bottom: 12px; display: -webkit-box; -webkit-line-clamp: 3; -webkit-box-orient: vertical; overflow: hidden; }
+    .card-footer { display: flex; align-items: center; justify-content: space-between; font-size: 11px; }
+    .card-time { color: var(--muted-light); }
+    .card-link { font-size: 10px; font-weight: 600; color: var(--red); }
+    .card-link:hover { text-decoration: underline; }
+
+    /* Article modal */
+    .modal-overlay { position: fixed; inset: 0; background: rgba(0,0,0,.5); z-index: 200; display: none; overflow-y: auto; padding: 40px 16px; }
+    .modal-overlay.open { display: block; }
+    .modal { background: var(--bg); max-width: 760px; margin: 0 auto; border-radius: 8px; overflow: hidden; }
+    .modal-header { padding: 28px 32px 0; }
+    .modal-agency { display: inline-flex; align-items: center; gap: 6px; background: var(--navy); color: #fff; font-size: 10px; font-weight: 700; letter-spacing: .8px; text-transform: uppercase; padding: 4px 10px; border-radius: 3px; margin-bottom: 14px; }
+    .modal-title { font-family: var(--serif); font-size: 26px; font-weight: 700; line-height: 1.3; margin-bottom: 14px; }
+    .modal-lede { font-size: 15px; color: var(--muted); line-height: 1.75; margin-bottom: 16px; font-style: italic; border-left: 3px solid var(--red); padding-left: 16px; }
+    .modal-meta { display: flex; align-items: center; gap: 10px; font-size: 12px; color: var(--muted-light); margin-bottom: 0; flex-wrap: wrap; }
+    .modal-source-bar { background: #f0f7f0; border-left: 3px solid #2a6b2a; margin: 20px 32px; padding: 10px 14px; font-size: 12px; color: #2a6b2a; border-radius: 0 4px 4px 0; }
+    .modal-source-bar a { color: #2a6b2a; font-weight: 700; text-decoration: underline; }
+    .modal-body { padding: 0 32px 32px; font-size: 15px; line-height: 1.8; color: var(--text); }
+    .modal-body p { margin-bottom: 16px; }
+    .modal-body ul { padding-left: 20px; margin-bottom: 16px; }
+    .modal-body li { margin-bottom: 6px; }
+    .modal-close { position: absolute; top: 16px; right: 16px; background: var(--surface); border: 1px solid var(--border); border-radius: 50%; width: 32px; height: 32px; cursor: pointer; font-size: 16px; display: flex; align-items: center; justify-content: center; color: var(--muted); }
+    .modal-close:hover { background: var(--border); }
+    .modal-tags { display: flex; gap: 8px; flex-wrap: wrap; padding: 0 32px 24px; }
+    .tag-pill { background: var(--surface); border: 1px solid var(--border); font-size: 11px; color: var(--muted); padding: 3px 10px; border-radius: 20px; }
+
+    /* List view */
+    .list-section { max-width: 1200px; margin: 0 auto 40px; padding: 0 32px; }
+    .list-item { display: grid; grid-template-columns: 80px 1fr auto; gap: 16px; padding: 14px 0; border-bottom: 1px solid var(--border); cursor: pointer; align-items: start; }
+    .list-item:hover .list-title { color: var(--red); }
+    .list-time { font-size: 11px; color: var(--muted-light); font-weight: 500; padding-top: 2px; }
+    .list-agency { display: inline-block; background: var(--surface); border: 1px solid var(--border); font-size: 9px; font-weight: 700; color: var(--navy); padding: 1px 6px; border-radius: 2px; margin-bottom: 5px; letter-spacing: .5px; text-transform: uppercase; }
+    .list-title { font-family: var(--serif); font-size: 15px; font-weight: 600; line-height: 1.4; transition: color .15s; }
+    .list-link { font-size: 10px; font-weight: 600; color: var(--red); white-space: nowrap; padding-top: 2px; }
+
+    /* Loading / empty */
+    .loading { text-align: center; padding: 60px; color: var(--muted); font-size: 14px; }
+    .spinner { display: inline-block; width: 20px; height: 20px; border: 2px solid var(--border); border-top-color: var(--red); border-radius: 50%; animation: spin .7s linear infinite; margin-right: 8px; vertical-align: middle; }
+    @keyframes spin { to { transform: rotate(360deg); } }
+
+    /* Footer */
+    footer { background: var(--surface); border-top: 1px solid var(--border); padding: 32px; }
+    .footer-inner { max-width: 1200px; margin: 0 auto; display: flex; justify-content: space-between; align-items: flex-start; gap: 32px; flex-wrap: wrap; }
+    .footer-brand { font-size: 18px; font-weight: 700; margin-bottom: 6px; }
+    .footer-brand span { color: var(--red); }
+    .footer-desc { font-size: 12px; color: var(--muted); line-height: 1.7; max-width: 320px; }
+    .footer-bottom { max-width: 1200px; margin: 20px auto 0; padding-top: 16px; border-top: 1px solid var(--border); font-size: 11px; color: var(--muted-light); display: flex; justify-content: space-between; flex-wrap: wrap; gap: 8px; }
+
+    @media (max-width: 768px) {
+      .top-bar { display: none; }
+      .masthead { padding: 0 16px; }
+      .masthead-inner { flex-wrap: wrap; }
+      .search-box { display: none; }
+      nav .nav-inner { padding: 0 16px; }
+      .agency-filter { padding: 10px 16px; }
+      .cards-grid { grid-template-columns: 1fr; padding: 0 16px; }
+      .card { border-right: none; border-bottom: 1px solid var(--border); padding: 0 0 20px !important; margin-bottom: 4px; }
+      .section-rule, .section-head { padding: 0 16px; }
+      .list-section { padding: 0 16px; }
+      .list-item { grid-template-columns: 1fr; gap: 4px; }
+      .list-link { display: none; }
+      footer { padding: 20px 16px; }
+      .modal { margin: 0; border-radius: 0; }
+      .modal-header, .modal-body, .modal-tags { padding-left: 16px; padding-right: 16px; }
+      .modal-source-bar { margin: 16px; }
+    }
+  </style>
+</head>
+<body>
+
+<header role="banner">
+<div class="top-bar">
+  <div class="top-bar-left">
+    <span class="gov-badge">🇸🇬 pressrelease.sg</span>
+    <span id="top-date"></span>
+    <span>Last updated: <span id="top-updated">—</span></span>
+    <span><span id="stat-today">—</span> releases today</span>
+  </div>
+  <div style="display:flex;gap:16px">
+    <span style="cursor:pointer" onclick="document.getElementById('about-section').scrollIntoView({behavior:'smooth'})">How it works</span>
+  </div>
+</div>
+
+<div class="masthead">
+  <div class="masthead-inner">
+    <div>
+      <div class="logo-name">pressrelease<span class="dot">.sg</span></div>
+      <div class="logo-sub">Singapore news, straight from the newsroom — in plain English</div>
+    </div>
+    <div style="display:flex;gap:10px;align-items:center">
+      <div class="search-box">
+        <span style="color:var(--muted-light);font-size:14px">⌕</span>
+        <input type="text" id="search-input" placeholder="Search press releases…" />
+      </div>
+    </div>
+  </div>
+</div>
+
+<nav aria-label="Main categories">
+  <div class="nav-inner" id="nav-cats">
+    <div class="nav-item active" data-cat="">All</div>
+    <div class="nav-item" data-cat="Housing">Housing</div>
+    <div class="nav-item" data-cat="Health">Health</div>
+    <div class="nav-item" data-cat="Education">Education</div>
+    <div class="nav-item" data-cat="Transport">Transport</div>
+    <div class="nav-item" data-cat="Money & CPF">Money & CPF</div>
+    <div class="nav-item" data-cat="Jobs">Jobs</div>
+    <div class="nav-item" data-cat="Environment">Environment</div>
+    <div class="nav-item" data-cat="Tech & Digital">Tech & Digital</div>
+    <div class="nav-item" data-cat="Economy">Economy</div>
+    <div class="nav-item" data-cat="Banking">Banking</div>
+    <div class="nav-item" data-cat="Telco">Telco</div>
+    <div class="nav-item" data-cat="Property">Property</div>
+  </div>
+</nav>
+</header>
+
+<!-- Ticker -->
+<div class="ticker" id="ticker-wrap">
+  <span class="ticker-label">Latest</span>
+  <span class="ticker-inner" id="ticker-inner">Loading…</span>
+</div>
+
+<main id="main-content">
+
+<!-- Agency filter -->
+<div class="agency-filter">
+  <div class="filter-inner" id="source-filters">
+    <span class="filter-label">Source:</span>
+    <div class="filter-chip active" data-source="">All Sources</div>
+  </div>
+</div>
+
+<!-- Top articles -->
+<div style="margin-top:28px"></div>
+<hr class="section-rule" />
+<div class="section-head">
+  <h2 class="section-title"><span class="red-bar"></span> Latest Releases</h2>
+  <span class="section-count" id="article-count">Loading…</span>
+</div>
+
+<div class="cards-grid" id="cards-grid">
+  <div class="loading"><span class="spinner"></span>Fetching press releases…</div>
+</div>
+
+<!-- Full list -->
+<hr class="section-rule" />
+<div class="section-head">
+  <h2 class="section-title"><span class="red-bar"></span> All Releases</h2>
+</div>
+<div class="list-section" id="list-section">
+  <div class="loading"><span class="spinner"></span>Loading…</div>
+</div>
+
+<!-- About -->
+<div id="about-section" style="background:var(--surface);border-top:1px solid var(--border);padding:48px 32px;margin-top:20px">
+  <div style="max-width:1200px;margin:0 auto">
+    <div style="text-align:center;margin-bottom:36px">
+      <div style="font-size:11px;font-weight:700;letter-spacing:1.5px;text-transform:uppercase;color:var(--red);margin-bottom:12px">About pressrelease.sg</div>
+      <h2 style="font-family:var(--serif);font-size:28px;font-weight:800;margin-bottom:12px">News Singaporeans care about,<br/>straight from the newsroom</h2>
+      <p style="font-size:14px;color:var(--muted);max-width:600px;margin:0 auto;line-height:1.8">Every day, the organisations shaping Singapore's future publish press releases that most people never read. We monitor every major newsroom, rewrite announcements in plain English, and put them in one place — always with a link back to the original.</p>
+    </div>
+    <div style="display:grid;grid-template-columns:repeat(4,1fr);gap:24px">
+      <div style="text-align:center;padding:20px">
+        <div style="font-size:28px;margin-bottom:10px">📋</div>
+        <h3 style="font-family:var(--serif);font-size:15px;font-weight:700;margin-bottom:6px">Straight from the newsroom</h3>
+        <p style="font-size:12px;color:var(--muted);line-height:1.6">Every article traces back to an official press release from a verified organisation.</p>
+      </div>
+      <div style="text-align:center;padding:20px">
+        <div style="font-size:28px;margin-bottom:10px">✍️</div>
+        <h3 style="font-family:var(--serif);font-size:15px;font-weight:700;margin-bottom:6px">Plain English, unchanged facts</h3>
+        <p style="font-size:12px;color:var(--muted);line-height:1.6">AI rewrites for clarity only. Every figure, date and name stays exactly as stated.</p>
+      </div>
+      <div style="text-align:center;padding:20px">
+        <div style="font-size:28px;margin-bottom:10px">🔗</div>
+        <h3 style="font-family:var(--serif);font-size:15px;font-weight:700;margin-bottom:6px">Always linked to the source</h3>
+        <p style="font-size:12px;color:var(--muted);line-height:1.6">Every article links to the original announcement. Verify anything, anytime.</p>
+      </div>
+      <div style="text-align:center;padding:20px">
+        <div style="font-size:28px;margin-bottom:10px">🏷️</div>
+        <h3 style="font-family:var(--serif);font-size:15px;font-weight:700;margin-bottom:6px">Paid content is always labeled</h3>
+        <p style="font-size:12px;color:var(--muted);line-height:1.6">Sponsored posts and brand releases are permanently and visibly distinct.</p>
+      </div>
+    </div>
+  </div>
+</div>
+
+</main>
+
+<footer role="contentinfo">
+  <div class="footer-inner">
+    <div>
+      <div class="footer-brand">pressrelease<span>.sg</span></div>
+      <div class="footer-desc">Singapore news, straight from the newsroom. Independent publication. Not affiliated with any organisation we cover.</div>
+    </div>
+    <div>
+      <div style="font-size:10px;font-weight:700;letter-spacing:1px;text-transform:uppercase;color:var(--muted);margin-bottom:10px">Sources</div>
+      <div id="footer-sources" style="display:flex;flex-wrap:wrap;gap:6px;max-width:600px"></div>
+    </div>
+  </div>
+  <div class="footer-bottom">
+    <span>© 2026 pressrelease.sg · Articles AI-rewritten from official press releases · Original content © respective organisations</span>
+    <span>Privacy · Terms · Contact</span>
+  </div>
+</footer>
+
+<!-- Article modal -->
+<div class="modal-overlay" id="modal-overlay" onclick="closeModal(event)">
+  <div class="modal" style="position:relative">
+    <button class="modal-close" onclick="closeModal()">✕</button>
+    <div class="modal-header">
+      <div class="modal-agency" id="modal-agency"></div>
+      <h1 class="modal-title" id="modal-title"></h1>
+      <p class="modal-lede" id="modal-lede"></p>
+      <div class="modal-meta" id="modal-meta"></div>
+    </div>
+    <div class="modal-source-bar" id="modal-source-bar"></div>
+    <div class="modal-body" id="modal-body"></div>
+    <div class="modal-tags" id="modal-tags"></div>
+  </div>
+</div>
+
+<script>
+const API = '';
+let allArticles = [];
+let activeCategory = '';
+let activeSource   = '';
+let searchTerm     = '';
+
+// ── Boot ──────────────────────────────────────────────────────────────────────
+(async () => {
+  updateTopBar();
+  await Promise.all([loadStats(), loadSources(), loadArticles()]);
+})();
+
+function updateTopBar() {
+  const now = new Date();
+  document.getElementById('top-date').textContent =
+    now.toLocaleDateString('en-SG', { weekday:'long', day:'numeric', month:'long', year:'numeric' });
+  document.getElementById('top-updated').textContent =
+    now.toLocaleTimeString('en-SG', { hour:'2-digit', minute:'2-digit' });
+}
+
+async function loadStats() {
+  try {
+    const s = await fetch(`${API}/api/stats`).then(r => r.json());
+    document.getElementById('stat-today').textContent = s.today ?? s.total ?? '—';
+  } catch (_) {}
+}
+
+async function loadSources() {
+  try {
+    const sources = await fetch(`${API}/api/sources`).then(r => r.json());
+    const wrap = document.getElementById('source-filters');
+    const footer = document.getElementById('footer-sources');
+    sources.forEach(s => {
+      const chip = document.createElement('div');
+      chip.className = 'filter-chip';
+      chip.dataset.source = s.source_name;
+      chip.textContent = s.source_name;
+      chip.onclick = () => filterBySource(s.source_name, chip);
+      wrap.appendChild(chip);
+
+      const pill = document.createElement('span');
+      pill.style.cssText = 'font-size:11px;font-weight:600;color:var(--muted);background:var(--bg);border:1px solid var(--border);padding:3px 8px;border-radius:3px';
+      pill.textContent = s.source_name;
+      footer.appendChild(pill);
+    });
+  } catch (_) {}
+}
+
+async function loadArticles() {
+  try {
+    const params = new URLSearchParams({ limit: 100 });
+    if (activeCategory) params.set('category', activeCategory);
+    if (activeSource)   params.set('source', activeSource);
+    const { articles } = await fetch(`${API}/api/articles?${params}`).then(r => r.json());
+    allArticles = articles || [];
+    render();
+    buildTicker();
+  } catch (err) {
+    document.getElementById('cards-grid').innerHTML = '<div class="loading">Failed to load articles. Is the server running?</div>';
+  }
+}
+
+// ── Render ────────────────────────────────────────────────────────────────────
+const ICONS = { Housing:'🏗️', Health:'🏥', Education:'🎓', Transport:'🚇', 'Money & CPF':'💰', Jobs:'👷', Environment:'♻️', 'Tech & Digital':'💻', Economy:'📈', Banking:'🏦', Telco:'📡', Property:'🏢', General:'📋', 'Safety & Law':'⚖️', 'Foreign Affairs':'🌍', Defence:'🛡️' };
+
+function render() {
+  const filtered = allArticles.filter(a => {
+    if (searchTerm && !a.title.toLowerCase().includes(searchTerm) && !(a.lede||'').toLowerCase().includes(searchTerm)) return false;
+    return true;
+  });
+
+  document.getElementById('article-count').textContent = `${filtered.length} articles`;
+
+  // Cards — top 6
+  const grid = document.getElementById('cards-grid');
+  if (!filtered.length) { grid.innerHTML = '<div class="loading">No articles found.</div>'; }
+  else {
+    grid.innerHTML = filtered.slice(0, 6).map(a => cardHTML(a)).join('');
+  }
+
+  // Full list
+  const list = document.getElementById('list-section');
+  list.innerHTML = filtered.slice(6).map(a => listItemHTML(a)).join('') || '<div class="loading" style="padding:20px 0">No more articles.</div>';
+}
+
+function cardHTML(a) {
+  const icon = ICONS[a.category] || '📋';
+  const date = relTime(a.published_at);
+  const lede = a.lede || a.raw_content || '';
+  return `<article class="card" onclick="openArticle(${a.id})" tabindex="0">
+    <div class="card-img">${icon}</div>
+    <div class="card-agency-badge"><span class="card-type-dot"></span> ${esc(a.source_name)}</div>
+    <h3 class="card-title">${esc(a.title)}</h3>
+    <p class="card-lede">${esc(lede)}</p>
+    <div class="card-footer">
+      <time class="card-time" datetime="${a.published_at}">${date}</time>
+      <a class="card-link" href="${esc(a.source_url)}" target="_blank" rel="noopener" onclick="event.stopPropagation()">Original →</a>
+    </div>
+  </article>`;
+}
+
+function listItemHTML(a) {
+  return `<div class="list-item" onclick="openArticle(${a.id})" tabindex="0">
+    <time class="list-time" datetime="${a.published_at}">${relTime(a.published_at)}</time>
+    <div>
+      <div class="list-agency">${esc(a.source_name)}</div>
+      <h3 class="list-title">${esc(a.title)}</h3>
+    </div>
+    <a class="list-link" href="${esc(a.source_url)}" target="_blank" rel="noopener" onclick="event.stopPropagation()">Original →</a>
+  </div>`;
+}
+
+// ── Article modal ─────────────────────────────────────────────────────────────
+async function openArticle(id) {
+  const a = allArticles.find(x => x.id === id);
+  if (!a) return;
+  const icon = ICONS[a.category] || '📋';
+
+  document.getElementById('modal-agency').textContent = `${icon} ${a.source_name} · ${a.category}`;
+  document.getElementById('modal-title').textContent  = a.title;
+  document.getElementById('modal-lede').textContent   = a.lede || '';
+  document.getElementById('modal-meta').innerHTML = `
+    <time datetime="${a.published_at}">${new Date(a.published_at).toLocaleDateString('en-SG',{day:'numeric',month:'long',year:'numeric'})}</time>
+    <span>·</span>
+    <span style="display:flex;align-items:center;gap:4px;color:var(--red);font-weight:600;font-size:10px">
+      <span style="width:5px;height:5px;border-radius:50%;background:var(--red);display:inline-block"></span>
+      ${a.ai_rewritten ? 'AI Rewritten' : 'Source Text'}
+    </span>`;
+
+  document.getElementById('modal-source-bar').innerHTML =
+    `✓ Sourced from the official <strong>${esc(a.source_name)}</strong> press release — <a href="${esc(a.source_url)}" target="_blank" rel="noopener">view original →</a>`;
+
+  const bodyEl = document.getElementById('modal-body');
+  if (a.body) {
+    bodyEl.innerHTML = a.body;
+  } else {
+    bodyEl.innerHTML = `<p>${esc(a.raw_content || a.title)}</p><p style="color:var(--muted-light);font-size:12px;margin-top:20px">AI rewriting pending. <a href="${esc(a.source_url)}" target="_blank" style="color:var(--red)">Read original →</a></p>`;
+  }
+
+  const tags = a.tags ? JSON.parse(a.tags) : [];
+  document.getElementById('modal-tags').innerHTML = tags.map(t => `<span class="tag-pill">${esc(t)}</span>`).join('');
+
+  document.getElementById('modal-overlay').classList.add('open');
+  document.body.style.overflow = 'hidden';
+}
+
+function closeModal(e) {
+  if (e && e.target !== document.getElementById('modal-overlay') && !e.target.classList.contains('modal-close')) return;
+  document.getElementById('modal-overlay').classList.remove('open');
+  document.body.style.overflow = '';
+}
+
+document.addEventListener('keydown', e => { if (e.key === 'Escape') closeModal({ target: document.getElementById('modal-overlay') }); });
+
+// ── Filters ───────────────────────────────────────────────────────────────────
+document.getElementById('nav-cats').addEventListener('click', e => {
+  const item = e.target.closest('.nav-item');
+  if (!item) return;
+  document.querySelectorAll('.nav-item').forEach(i => i.classList.remove('active'));
+  item.classList.add('active');
+  activeCategory = item.dataset.cat;
+  loadArticles();
+});
+
+function filterBySource(name, chip) {
+  if (activeSource === name) {
+    activeSource = '';
+    document.querySelectorAll('.filter-chip').forEach(c => c.classList.remove('active'));
+    document.querySelector('.filter-chip[data-source=""]').classList.add('active');
+  } else {
+    activeSource = name;
+    document.querySelectorAll('.filter-chip').forEach(c => c.classList.remove('active'));
+    chip.classList.add('active');
+  }
+  loadArticles();
+}
+
+document.getElementById('search-input').addEventListener('input', e => {
+  searchTerm = e.target.value.toLowerCase().trim();
+  render();
+});
+
+// ── Ticker ────────────────────────────────────────────────────────────────────
+function buildTicker() {
+  const items = allArticles.slice(0, 10);
+  if (!items.length) return;
+  const html = [...items, ...items].map(a =>
+    `<span class="ticker-item"><span class="ticker-agency">${esc(a.source_name)}</span>${esc(a.title)}</span><span style="color:rgba(255,255,255,.3)"> · </span>`
+  ).join('');
+  document.getElementById('ticker-inner').innerHTML = html;
+}
+
+// ── Helpers ───────────────────────────────────────────────────────────────────
+function relTime(iso) {
+  const diff = (Date.now() - new Date(iso)) / 1000;
+  if (diff < 3600)  return `${Math.floor(diff/60)}m ago`;
+  if (diff < 86400) return `${Math.floor(diff/3600)}h ago`;
+  if (diff < 604800) return `${Math.floor(diff/86400)}d ago`;
+  return new Date(iso).toLocaleDateString('en-SG', { day:'numeric', month:'short' });
+}
+
+function esc(s) {
+  return (s||'').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');
+}
+</script>
+</body>
+</html>
