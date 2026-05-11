@@ -3,23 +3,24 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>RedDot — Singapore News</title>
+  <title>pressrelease.sg — Singapore Government News in Plain English</title>
   <link rel="preconnect" href="https://fonts.googleapis.com" />
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
-  <link href="https://fonts.googleapis.com/css2?family=Playfair+Display:wght@400;600;700;800&family=Inter:wght@400;500;600&display=swap" rel="stylesheet" />
+  <link href="https://fonts.googleapis.com/css2?family=Playfair+Display:wght@400;600;700;800&family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet" />
   <style>
     *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
 
     :root {
       --red: #C8102E;
       --red-dark: #a00d24;
-      --red-light: #fdf2f4;
+      --red-light: #fef5f6;
+      --navy: #1a2744;
       --bg: #ffffff;
-      --surface: #f8f7f5;
-      --border: #e5e3df;
-      --border-dark: #ccc9c4;
+      --surface: #f7f6f4;
+      --border: #e8e6e2;
+      --border-dark: #d0cdc8;
       --text: #1a1a1a;
-      --muted: #666;
+      --muted: #5a5a5a;
       --muted-light: #999;
       --serif: 'Playfair Display', Georgia, serif;
       --sans: 'Inter', system-ui, sans-serif;
@@ -37,26 +38,37 @@
 
     /* ── TOP BAR ── */
     .top-bar {
-      background: var(--red);
-      color: #fff;
-      font-family: var(--sans);
+      background: var(--navy);
+      color: rgba(255,255,255,0.75);
       font-size: 11px;
       font-weight: 500;
-      padding: 6px 32px;
+      padding: 7px 32px;
       display: flex;
       align-items: center;
       justify-content: space-between;
     }
-    .top-bar-left { display: flex; align-items: center; gap: 16px; opacity: 0.9; }
-    .top-bar-right { display: flex; align-items: center; gap: 16px; opacity: 0.9; }
-    .top-bar a { color: #fff; }
-    .top-bar a:hover { text-decoration: underline; }
-    .top-sep { opacity: 0.4; }
+    .top-bar-left { display: flex; align-items: center; gap: 16px; }
+    .top-bar-right { display: flex; align-items: center; gap: 16px; }
+    .top-sep { opacity: 0.3; }
+    .gov-badge {
+      display: inline-flex;
+      align-items: center;
+      gap: 5px;
+      background: rgba(255,255,255,0.12);
+      border: 1px solid rgba(255,255,255,0.2);
+      border-radius: 3px;
+      padding: 2px 8px;
+      font-size: 10px;
+      font-weight: 600;
+      letter-spacing: 0.5px;
+    }
+    .sg-flag { font-size: 12px; }
 
     /* ── MASTHEAD ── */
     .masthead {
       border-bottom: 1px solid var(--border);
       padding: 0 32px;
+      background: var(--bg);
     }
     .masthead-inner {
       max-width: 1200px;
@@ -64,78 +76,66 @@
       display: flex;
       align-items: center;
       justify-content: space-between;
-      padding: 16px 0 12px;
+      padding: 20px 0 16px;
+      gap: 24px;
     }
 
-    .logo {
-      display: flex;
-      align-items: center;
-      gap: 10px;
-    }
-    .logo-dot {
-      width: 36px;
-      height: 36px;
-      background: var(--red);
-      border-radius: 50%;
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      color: #fff;
-      font-family: var(--serif);
-      font-weight: 800;
-      font-size: 16px;
-      letter-spacing: -1px;
-      flex-shrink: 0;
-    }
-    .logo-text {
-      font-family: var(--serif);
-      font-size: 28px;
-      font-weight: 800;
-      letter-spacing: -1px;
+    .logo-block { display: flex; flex-direction: column; gap: 2px; }
+    .logo-name {
+      font-family: var(--sans);
+      font-size: 26px;
+      font-weight: 700;
+      letter-spacing: -0.5px;
       color: var(--text);
       line-height: 1;
     }
-    .logo-text span { color: var(--red); }
-    .logo-tagline {
-      font-size: 10px;
+    .logo-name .dot-sg { color: var(--red); }
+    .logo-sub {
+      font-size: 11px;
       color: var(--muted);
-      font-family: var(--sans);
       font-weight: 500;
-      letter-spacing: 0.5px;
-      text-transform: uppercase;
-      margin-top: 2px;
+      letter-spacing: 0.2px;
     }
 
-    .masthead-right {
-      display: flex;
-      align-items: center;
-      gap: 12px;
-    }
+    .masthead-right { display: flex; align-items: center; gap: 12px; }
     .search-box {
       display: flex;
       align-items: center;
       border: 1px solid var(--border-dark);
       border-radius: 4px;
-      padding: 7px 12px;
+      padding: 8px 12px;
       gap: 8px;
       background: var(--surface);
     }
     .search-box input {
-      background: none;
-      border: none;
-      outline: none;
-      color: var(--text);
-      font-size: 13px;
-      width: 180px;
+      background: none; border: none; outline: none;
+      color: var(--text); font-size: 13px; width: 200px;
       font-family: var(--sans);
     }
     .search-box input::placeholder { color: var(--muted-light); }
-    .search-icon { color: var(--muted); font-size: 14px; }
+
+    .subscribe-btn {
+      background: var(--red);
+      color: #fff;
+      font-size: 12px;
+      font-weight: 600;
+      padding: 8px 16px;
+      border-radius: 4px;
+      border: none;
+      cursor: pointer;
+      white-space: nowrap;
+      font-family: var(--sans);
+    }
+    .subscribe-btn:hover { background: var(--red-dark); }
 
     /* ── NAV ── */
     nav {
       background: var(--bg);
       border-bottom: 3px solid var(--red);
+      position: sticky;
+      top: 0;
+      z-index: 100;
+      box-shadow: 0 2px 8px rgba(0,0,0,0.06);
     }
     .nav-inner {
       max-width: 1200px;
@@ -143,18 +143,15 @@
       padding: 0 32px;
       display: flex;
       align-items: center;
-      gap: 0;
       overflow-x: auto;
       scrollbar-width: none;
     }
     .nav-inner::-webkit-scrollbar { display: none; }
-
     .nav-item {
-      font-family: var(--sans);
-      font-size: 13px;
+      font-size: 12px;
       font-weight: 600;
       color: var(--muted);
-      padding: 12px 16px;
+      padding: 11px 14px;
       white-space: nowrap;
       cursor: pointer;
       border-bottom: 3px solid transparent;
@@ -167,347 +164,203 @@
 
     /* ── TICKER ── */
     .ticker {
-      background: var(--surface);
-      border-bottom: 1px solid var(--border);
+      background: var(--red);
       padding: 7px 0;
       overflow: hidden;
       white-space: nowrap;
     }
     .ticker-label {
       display: inline-block;
-      background: var(--red);
+      background: rgba(0,0,0,0.2);
       color: #fff;
-      font-size: 10px;
+      font-size: 9px;
       font-weight: 700;
-      letter-spacing: 1px;
+      letter-spacing: 1.5px;
       text-transform: uppercase;
       padding: 2px 10px;
       margin-right: 16px;
       margin-left: 32px;
       vertical-align: middle;
+      border-radius: 2px;
     }
     .ticker-inner {
       display: inline-flex;
       gap: 48px;
-      animation: scroll 35s linear infinite;
+      animation: scroll 40s linear infinite;
     }
-    @keyframes scroll {
-      0% { transform: translateX(0); }
-      100% { transform: translateX(-50%); }
-    }
-    .ticker-item { font-size: 12px; font-weight: 500; color: var(--muted); vertical-align: middle; }
-    .ticker-sep { color: var(--red); opacity: 0.5; }
+    @keyframes scroll { 0%{transform:translateX(0)} 100%{transform:translateX(-50%)} }
+    .ticker-item { font-size: 12px; font-weight: 500; color: rgba(255,255,255,0.9); vertical-align: middle; }
+    .ticker-agency { font-weight: 700; color: #fff; margin-right: 4px; }
+    .ticker-sep { color: rgba(255,255,255,0.3); }
 
     /* ── LAYOUT ── */
-    .container {
-      max-width: 1200px;
-      margin: 0 auto;
-      padding: 0 32px;
-    }
+    .container { max-width: 1200px; margin: 0 auto; padding: 0 32px; }
 
     /* ── HERO ── */
     .hero {
+      max-width: 1200px;
+      margin: 28px auto;
+      padding: 0 32px;
       display: grid;
       grid-template-columns: 1fr 1px 340px;
       gap: 0;
-      margin: 28px auto;
-      max-width: 1200px;
-      padding: 0 32px;
     }
-
-    .hero-divider {
-      background: var(--border);
-      margin: 0 28px;
-    }
+    .hero-divider { background: var(--border); margin: 0 28px; }
 
     .hero-main { cursor: pointer; }
-    .hero-main:hover .hero-main-title { color: var(--red); }
+    .hero-main:hover .hero-title { color: var(--red); }
 
-    .hero-img-block {
-      position: relative;
-      margin-bottom: 16px;
-      overflow: hidden;
-      border-radius: 2px;
+    .agency-pill {
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+      background: var(--navy);
+      color: #fff;
+      font-size: 10px;
+      font-weight: 700;
+      letter-spacing: 0.8px;
+      text-transform: uppercase;
+      padding: 4px 10px;
+      border-radius: 3px;
+      margin-bottom: 12px;
     }
-    .hero-img-placeholder {
+    .agency-dot {
+      width: 5px; height: 5px;
+      border-radius: 50%;
+      background: var(--red);
+    }
+
+    .hero-img {
       width: 100%;
-      height: 340px;
-      background: linear-gradient(160deg, #f0ebe6 0%, #e8e0d8 100%);
+      height: 300px;
+      border-radius: 2px;
       display: flex;
       align-items: center;
       justify-content: center;
       font-size: 64px;
-      opacity: 0.5;
+      margin-bottom: 16px;
     }
-    .hero-img-caption {
-      position: absolute;
-      bottom: 0; left: 0; right: 0;
-      background: rgba(0,0,0,0.55);
-      color: #fff;
-      font-size: 10px;
-      padding: 4px 8px;
-      font-style: italic;
-    }
+    .hi-1 { background: linear-gradient(135deg, #eef2f8, #dde6f0); }
 
-    .ai-tag {
-      display: inline-flex;
-      align-items: center;
-      gap: 4px;
-      background: var(--red);
-      color: #fff;
-      font-size: 9px;
-      font-weight: 700;
-      letter-spacing: 1px;
-      text-transform: uppercase;
-      padding: 3px 7px;
-      margin-bottom: 10px;
-      border-radius: 2px;
-    }
-    .ai-dot {
-      width: 5px;
-      height: 5px;
-      border-radius: 50%;
-      background: #fff;
-      animation: pulse 2s infinite;
-    }
-    @keyframes pulse { 0%,100%{opacity:1} 50%{opacity:0.3} }
-
-    .category-tag {
-      display: inline-block;
-      font-size: 10px;
-      font-weight: 700;
-      letter-spacing: 1px;
-      text-transform: uppercase;
-      color: var(--red);
-      margin-bottom: 8px;
-      font-family: var(--sans);
-    }
-
-    .hero-main-title {
+    .hero-title {
       font-family: var(--serif);
-      font-size: 30px;
+      font-size: 28px;
       font-weight: 700;
       line-height: 1.25;
       margin-bottom: 12px;
       transition: color .15s;
     }
-
     .hero-summary {
       font-size: 14px;
       color: var(--muted);
-      line-height: 1.7;
+      line-height: 1.75;
       margin-bottom: 14px;
     }
-
-    .article-meta {
+    .hero-meta {
       display: flex;
       align-items: center;
       gap: 10px;
-      font-size: 11px;
+      font-size: 12px;
       color: var(--muted-light);
       flex-wrap: wrap;
+      margin-bottom: 14px;
     }
-    .source-name { font-weight: 600; color: var(--muted); }
     .meta-sep { color: var(--border-dark); }
 
-    .source-badges {
-      display: flex;
+    .source-link {
+      display: inline-flex;
+      align-items: center;
       gap: 6px;
-      margin-top: 10px;
-      flex-wrap: wrap;
-    }
-    .source-badge {
-      background: var(--surface);
-      border: 1px solid var(--border);
-      border-radius: 3px;
-      font-size: 10px;
+      border: 1px solid var(--red);
+      color: var(--red);
+      font-size: 11px;
       font-weight: 600;
-      color: var(--muted);
-      padding: 2px 8px;
+      padding: 6px 12px;
+      border-radius: 3px;
+      transition: all .15s;
       font-family: var(--sans);
     }
+    .source-link:hover { background: var(--red); color: #fff; }
 
-    /* Hero sidebar */
-    .hero-sidebar {
+    .ai-note {
       display: flex;
-      flex-direction: column;
-      gap: 0;
+      align-items: center;
+      gap: 6px;
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-left: 3px solid var(--red);
+      padding: 8px 12px;
+      border-radius: 0 3px 3px 0;
+      font-size: 11px;
+      color: var(--muted);
+      margin-top: 14px;
     }
+    .ai-icon { font-size: 13px; }
 
+    /* Sidebar */
+    .hero-sidebar { display: flex; flex-direction: column; gap: 0; }
     .sidebar-story {
-      padding: 0 0 16px;
+      padding-bottom: 16px;
       border-bottom: 1px solid var(--border);
       margin-bottom: 16px;
       cursor: pointer;
     }
-    .sidebar-story:last-child { border-bottom: none; margin-bottom: 0; }
+    .sidebar-story:last-child { border-bottom: none; padding-bottom: 0; margin-bottom: 0; }
     .sidebar-story:hover .sidebar-title { color: var(--red); }
 
-    .sidebar-thumb {
-      width: 100%;
-      height: 90px;
-      border-radius: 2px;
-      display: flex;
+    .sidebar-agency {
+      display: inline-flex;
       align-items: center;
-      justify-content: center;
-      font-size: 28px;
-      margin-bottom: 10px;
+      gap: 5px;
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: 3px;
+      font-size: 10px;
+      font-weight: 700;
+      color: var(--navy);
+      padding: 2px 7px;
+      margin-bottom: 8px;
+      letter-spacing: 0.5px;
     }
-    .st-1 { background: linear-gradient(135deg, #f5f0eb, #ede5dc); }
-    .st-2 { background: linear-gradient(135deg, #ebf0f5, #dce5ed); }
-    .st-3 { background: linear-gradient(135deg, #f5ebeb, #eddcdc); }
-
     .sidebar-title {
       font-family: var(--serif);
       font-size: 15px;
       font-weight: 700;
-      line-height: 1.35;
+      line-height: 1.4;
       margin-bottom: 6px;
       transition: color .15s;
     }
-    .sidebar-meta { font-size: 11px; color: var(--muted-light); }
-
-    /* ── SECTION DIVIDER ── */
-    .section-rule {
-      max-width: 1200px;
-      margin: 0 auto 24px;
-      padding: 0 32px;
-      border: none;
-      border-top: 2px solid var(--text);
-    }
-
-    .section-header {
-      max-width: 1200px;
-      margin: 0 auto 18px;
-      padding: 0 32px;
-      display: flex;
-      align-items: baseline;
-      justify-content: space-between;
-    }
-    .section-title-text {
-      font-family: var(--serif);
-      font-size: 20px;
-      font-weight: 800;
-      color: var(--text);
-      display: flex;
-      align-items: center;
-      gap: 10px;
-    }
-    .section-title-text .red-bar {
-      display: inline-block;
-      width: 4px;
-      height: 22px;
-      background: var(--red);
-      border-radius: 2px;
-    }
-    .see-all {
-      font-size: 11px;
-      font-weight: 600;
-      color: var(--red);
-      letter-spacing: 0.3px;
-      font-family: var(--sans);
-    }
-    .see-all:hover { text-decoration: underline; }
-
-    /* ── CARDS ── */
-    .cards-grid {
-      max-width: 1200px;
-      margin: 0 auto 40px;
-      padding: 0 32px;
-      display: grid;
-      grid-template-columns: repeat(3, 1fr);
-      gap: 0;
-    }
-
-    .card {
-      padding: 0 20px 20px 0;
-      border-right: 1px solid var(--border);
-      margin-right: 0;
-      cursor: pointer;
-    }
-    .card:last-child { border-right: none; padding-right: 0; }
-    .card:nth-child(2) { padding-left: 20px; }
-    .card:nth-child(3) { padding-left: 20px; }
-    .card:hover .card-title { color: var(--red); }
-
-    .card-thumb {
-      width: 100%;
-      height: 130px;
-      border-radius: 2px;
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      font-size: 32px;
-      margin-bottom: 12px;
-    }
-    .ct-1 { background: linear-gradient(135deg, #f5f0eb, #ede5dc); }
-    .ct-2 { background: linear-gradient(135deg, #ebf5eb, #dcedc); }
-    .ct-3 { background: linear-gradient(135deg, #ebf0f5, #dce5ed); }
-    .ct-4 { background: linear-gradient(135deg, #f5f5eb, #ededdc); }
-    .ct-5 { background: linear-gradient(135deg, #f5ebf0, #eddce5); }
-    .ct-6 { background: linear-gradient(135deg, #f0f5eb, #e5eddc); }
-
-    .card-cat {
-      font-size: 10px;
-      font-weight: 700;
-      letter-spacing: 1px;
-      text-transform: uppercase;
-      color: var(--red);
-      margin-bottom: 6px;
-      font-family: var(--sans);
-    }
-    .card-title {
-      font-family: var(--serif);
-      font-size: 16px;
-      font-weight: 700;
-      line-height: 1.35;
-      margin-bottom: 8px;
-      transition: color .15s;
-    }
-    .card-summary {
-      font-size: 12px;
-      color: var(--muted);
-      line-height: 1.6;
-      margin-bottom: 10px;
-      display: -webkit-box;
-      -webkit-line-clamp: 3;
-      -webkit-box-orient: vertical;
-      overflow: hidden;
-    }
-    .card-meta {
+    .sidebar-meta {
       display: flex;
       align-items: center;
       justify-content: space-between;
       font-size: 11px;
       color: var(--muted-light);
     }
-    .card-ai {
-      display: flex;
-      align-items: center;
-      gap: 4px;
+    .view-release {
       font-size: 10px;
       font-weight: 600;
       color: var(--red);
-      opacity: 0.7;
     }
+    .view-release:hover { text-decoration: underline; }
 
-    /* ── SOURCES SECTION ── */
-    .sources-section {
+    /* ── AGENCY FILTER ── */
+    .agency-filter {
       background: var(--surface);
       border-top: 1px solid var(--border);
       border-bottom: 1px solid var(--border);
-      padding: 16px 32px;
+      padding: 14px 32px;
       margin-bottom: 32px;
     }
-    .sources-inner {
+    .agency-filter-inner {
       max-width: 1200px;
       margin: 0 auto;
       display: flex;
       align-items: center;
-      gap: 12px;
+      gap: 8px;
       flex-wrap: wrap;
     }
-    .sources-label {
+    .filter-label {
       font-size: 10px;
       font-weight: 700;
       letter-spacing: 1px;
@@ -516,7 +369,7 @@
       flex-shrink: 0;
       margin-right: 4px;
     }
-    .source-pill {
+    .agency-chip {
       display: flex;
       align-items: center;
       gap: 5px;
@@ -531,67 +384,238 @@
       transition: all .15s;
       font-family: var(--sans);
     }
-    .source-pill:hover { border-color: var(--red); color: var(--red); }
-    .source-pill.active { background: var(--red); border-color: var(--red); color: #fff; }
-    .s-dot { width: 5px; height: 5px; border-radius: 50%; background: currentColor; opacity: 0.6; }
+    .agency-chip:hover { border-color: var(--navy); color: var(--navy); }
+    .agency-chip.active { background: var(--navy); border-color: var(--navy); color: #fff; }
+    .chip-dot { width: 5px; height: 5px; border-radius: 50%; background: var(--red); }
 
-    /* ── BUSINESS STRIP ── */
-    .biz-strip {
+    /* ── SECTION ── */
+    .section-rule {
+      max-width: 1200px;
+      margin: 0 auto 20px;
+      padding: 0 32px;
+      border: none;
+      border-top: 2px solid var(--text);
+    }
+    .section-head {
+      max-width: 1200px;
+      margin: 0 auto 20px;
+      padding: 0 32px;
+      display: flex;
+      align-items: baseline;
+      justify-content: space-between;
+    }
+    .section-title {
+      font-family: var(--serif);
+      font-size: 20px;
+      font-weight: 800;
+      display: flex;
+      align-items: center;
+      gap: 10px;
+    }
+    .red-bar { display: inline-block; width: 4px; height: 22px; background: var(--red); border-radius: 2px; }
+    .see-all { font-size: 11px; font-weight: 600; color: var(--red); }
+    .see-all:hover { text-decoration: underline; }
+
+    /* ── ARTICLE CARDS ── */
+    .cards-grid {
       max-width: 1200px;
       margin: 0 auto 40px;
       padding: 0 32px;
       display: grid;
-      grid-template-columns: 2fr 1fr 1fr;
-      gap: 24px;
+      grid-template-columns: repeat(3, 1fr);
+      gap: 0;
     }
-    .biz-main { border-right: 1px solid var(--border); padding-right: 24px; }
-    .biz-main:hover .biz-main-title { color: var(--red); }
-    .biz-main-img {
-      width: 100%;
-      height: 160px;
+    .card {
+      padding: 0 20px 20px 0;
+      border-right: 1px solid var(--border);
+      cursor: pointer;
+    }
+    .card:last-child { border-right: none; padding-right: 0; }
+    .card:nth-child(n+2) { padding-left: 20px; }
+    .card:hover .card-title { color: var(--red); }
+
+    .card-img {
+      width: 100%; height: 120px;
       border-radius: 2px;
       display: flex;
       align-items: center;
       justify-content: center;
-      font-size: 40px;
+      font-size: 28px;
       margin-bottom: 12px;
-      background: linear-gradient(135deg, #f5f0eb, #ede5dc);
     }
-    .biz-main-title {
-      font-family: var(--serif);
-      font-size: 20px;
+    .ci-1 { background: linear-gradient(135deg, #eef5ee, #ddeedd); }
+    .ci-2 { background: linear-gradient(135deg, #f5eeee, #eeddd); }
+    .ci-3 { background: linear-gradient(135deg, #eeeef5, #dddeed); }
+    .ci-4 { background: linear-gradient(135deg, #f5f2ee, #ede8dd); }
+    .ci-5 { background: linear-gradient(135deg, #eef2f5, #dde6ed); }
+    .ci-6 { background: linear-gradient(135deg, #f2f5ee, #e6eddd); }
+
+    .card-agency {
+      display: inline-flex;
+      align-items: center;
+      gap: 4px;
+      background: var(--surface);
+      border: 1px solid var(--border);
+      font-size: 9px;
       font-weight: 700;
-      line-height: 1.3;
+      color: var(--navy);
+      padding: 2px 6px;
+      border-radius: 2px;
       margin-bottom: 8px;
-      cursor: pointer;
-      transition: color .15s;
+      letter-spacing: 0.5px;
+      text-transform: uppercase;
     }
-    .biz-side {
-      display: flex;
-      flex-direction: column;
-      gap: 14px;
-    }
-    .biz-item {
-      border-bottom: 1px solid var(--border);
-      padding-bottom: 14px;
-      cursor: pointer;
-    }
-    .biz-item:last-child { border-bottom: none; }
-    .biz-item:hover .biz-item-title { color: var(--red); }
-    .biz-item-title {
+    .card-title {
       font-family: var(--serif);
-      font-size: 14px;
+      font-size: 15px;
       font-weight: 700;
       line-height: 1.4;
-      margin-bottom: 4px;
+      margin-bottom: 8px;
       transition: color .15s;
     }
-    .biz-item-meta { font-size: 11px; color: var(--muted-light); }
+    .card-summary {
+      font-size: 12px;
+      color: var(--muted);
+      line-height: 1.65;
+      margin-bottom: 12px;
+      display: -webkit-box;
+      -webkit-line-clamp: 3;
+      -webkit-box-orient: vertical;
+      overflow: hidden;
+    }
+    .card-footer {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      font-size: 11px;
+    }
+    .card-time { color: var(--muted-light); }
+    .card-source-link {
+      font-size: 10px;
+      font-weight: 600;
+      color: var(--red);
+      display: flex;
+      align-items: center;
+      gap: 3px;
+    }
+    .card-source-link:hover { text-decoration: underline; }
+
+    /* ── LATEST LIST ── */
+    .latest-list {
+      max-width: 1200px;
+      margin: 0 auto 40px;
+      padding: 0 32px;
+      display: flex;
+      flex-direction: column;
+      gap: 0;
+    }
+    .latest-item {
+      display: grid;
+      grid-template-columns: 80px 1fr auto;
+      gap: 16px;
+      align-items: start;
+      padding: 14px 0;
+      border-bottom: 1px solid var(--border);
+      cursor: pointer;
+    }
+    .latest-item:hover .latest-title { color: var(--red); }
+    .latest-time {
+      font-size: 11px;
+      color: var(--muted-light);
+      padding-top: 2px;
+      font-weight: 500;
+    }
+    .latest-agency-badge {
+      display: inline-block;
+      background: var(--surface);
+      border: 1px solid var(--border);
+      font-size: 9px;
+      font-weight: 700;
+      color: var(--navy);
+      padding: 1px 6px;
+      border-radius: 2px;
+      margin-bottom: 5px;
+      letter-spacing: 0.5px;
+      text-transform: uppercase;
+    }
+    .latest-title {
+      font-family: var(--serif);
+      font-size: 15px;
+      font-weight: 600;
+      line-height: 1.4;
+      transition: color .15s;
+    }
+    .latest-link {
+      font-size: 10px;
+      font-weight: 600;
+      color: var(--red);
+      white-space: nowrap;
+      padding-top: 2px;
+    }
+    .latest-link:hover { text-decoration: underline; }
+
+    /* ── HOW IT WORKS STRIP ── */
+    .how-strip {
+      background: var(--navy);
+      color: #fff;
+      padding: 28px 32px;
+      margin-bottom: 40px;
+    }
+    .how-inner {
+      max-width: 1200px;
+      margin: 0 auto;
+      display: grid;
+      grid-template-columns: auto 1fr 1fr 1fr 1fr;
+      gap: 32px;
+      align-items: center;
+    }
+    .how-label {
+      font-size: 10px;
+      font-weight: 700;
+      letter-spacing: 1px;
+      text-transform: uppercase;
+      color: rgba(255,255,255,0.5);
+      writing-mode: vertical-lr;
+      transform: rotate(180deg);
+    }
+    .how-step {
+      display: flex;
+      flex-direction: column;
+      gap: 8px;
+      position: relative;
+    }
+    .how-step::before {
+      content: '';
+      position: absolute;
+      left: -16px;
+      top: 50%;
+      transform: translateY(-50%);
+      width: 1px;
+      height: 60%;
+      background: rgba(255,255,255,0.15);
+    }
+    .how-step:first-child::before { display: none; }
+    .how-num {
+      font-size: 10px;
+      font-weight: 700;
+      color: var(--red);
+      letter-spacing: 0.5px;
+    }
+    .how-title {
+      font-size: 14px;
+      font-weight: 700;
+      color: #fff;
+    }
+    .how-desc {
+      font-size: 12px;
+      color: rgba(255,255,255,0.55);
+      line-height: 1.5;
+    }
 
     /* ── FOOTER ── */
     footer {
-      background: var(--text);
-      color: #aaa;
+      background: var(--surface);
+      border-top: 1px solid var(--border);
       padding: 32px;
     }
     .footer-inner {
@@ -600,44 +624,45 @@
       display: grid;
       grid-template-columns: 1fr 2fr;
       gap: 48px;
-      align-items: start;
+      margin-bottom: 24px;
     }
-    .footer-logo {
-      font-family: var(--serif);
-      font-size: 22px;
-      font-weight: 800;
-      color: #fff;
-      margin-bottom: 8px;
+    .footer-brand-name {
+      font-size: 18px;
+      font-weight: 700;
+      color: var(--text);
+      margin-bottom: 6px;
     }
-    .footer-logo span { color: var(--red); }
-    .footer-tagline { font-size: 12px; line-height: 1.6; max-width: 240px; }
-    .footer-sources-label {
+    .footer-brand-name span { color: var(--red); }
+    .footer-desc { font-size: 12px; color: var(--muted); line-height: 1.7; }
+    .footer-agencies-label {
       font-size: 10px;
       font-weight: 700;
       letter-spacing: 1px;
       text-transform: uppercase;
-      color: #777;
+      color: var(--muted);
       margin-bottom: 10px;
     }
-    .footer-sources {
+    .footer-agencies {
       display: flex;
       flex-wrap: wrap;
-      gap: 8px;
+      gap: 6px;
     }
-    .footer-source {
+    .footer-agency {
       font-size: 11px;
-      color: #888;
-      background: #2a2a2a;
-      padding: 3px 9px;
+      font-weight: 600;
+      color: var(--muted);
+      background: var(--bg);
+      border: 1px solid var(--border);
+      padding: 3px 8px;
       border-radius: 3px;
     }
     .footer-bottom {
       max-width: 1200px;
-      margin: 24px auto 0;
-      padding-top: 16px;
-      border-top: 1px solid #333;
+      margin: 0 auto;
+      padding-top: 20px;
+      border-top: 1px solid var(--border);
       font-size: 11px;
-      color: #555;
+      color: var(--muted-light);
       display: flex;
       justify-content: space-between;
     }
@@ -645,23 +670,26 @@
     /* ── RESPONSIVE ── */
     @media (max-width: 768px) {
       .top-bar { display: none; }
-      .masthead-inner { padding: 12px 0; }
       .masthead { padding: 0 16px; }
-      .hero { grid-template-columns: 1fr; padding: 0 16px; }
-      .hero-divider { display: none; }
-      .hero-sidebar { flex-direction: row; overflow-x: auto; gap: 16px; margin-top: 24px; }
-      .sidebar-story { min-width: 220px; border-bottom: none; padding-bottom: 0; margin-bottom: 0; border-right: 1px solid var(--border); padding-right: 16px; }
-      .cards-grid { grid-template-columns: 1fr; padding: 0 16px; }
-      .card { border-right: none; border-bottom: 1px solid var(--border); padding: 0 0 20px !important; margin-bottom: 20px; }
-      .biz-strip { grid-template-columns: 1fr; padding: 0 16px; }
-      .biz-main { border-right: none; padding-right: 0; border-bottom: 1px solid var(--border); padding-bottom: 20px; }
-      .section-header { padding: 0 16px; }
-      .sources-section { padding: 12px 16px; }
-      .nav-inner { padding: 0 16px; }
-      .footer-inner { grid-template-columns: 1fr; gap: 24px; }
-      .footer { padding: 24px 16px; }
-      .footer-bottom { flex-direction: column; gap: 8px; padding: 0 0; }
+      .masthead-inner { flex-wrap: wrap; gap: 12px; }
       .search-box { display: none; }
+      .hero { grid-template-columns: 1fr; padding: 0 16px; margin-top: 20px; }
+      .hero-divider { display: none; }
+      .hero-sidebar { margin-top: 24px; }
+      .agency-filter { padding: 12px 16px; }
+      .section-rule, .section-head { padding: 0 16px; }
+      .cards-grid { grid-template-columns: 1fr; padding: 0 16px; }
+      .card { border-right: none; border-bottom: 1px solid var(--border); padding: 0 0 20px !important; margin-bottom: 4px; }
+      .latest-list { padding: 0 16px; }
+      .latest-item { grid-template-columns: 1fr; gap: 4px; }
+      .latest-link { display: none; }
+      .how-strip { padding: 20px 16px; }
+      .how-inner { grid-template-columns: 1fr 1fr; }
+      .how-label { display: none; }
+      .how-step::before { display: none; }
+      footer { padding: 24px 16px; }
+      .footer-inner { grid-template-columns: 1fr; gap: 20px; }
+      .footer-bottom { flex-direction: column; gap: 6px; }
     }
   </style>
 </head>
@@ -670,38 +698,36 @@
 <!-- TOP BAR -->
 <div class="top-bar">
   <div class="top-bar-left">
+    <span class="gov-badge"><span class="sg-flag">🇸🇬</span> Singapore Government Press Releases</span>
+    <span class="top-sep">|</span>
     <span>Monday, 12 May 2026</span>
     <span class="top-sep">|</span>
-    <span>Singapore 🇸🇬 · 31°C</span>
+    <span>Last updated: 9:14 AM</span>
     <span class="top-sep">|</span>
-    <span>SGD/USD: 0.756</span>
-    <span class="top-sep">|</span>
-    <span>STI: 3,842.10 ▲ 0.4%</span>
+    <span>47 releases today</span>
   </div>
   <div class="top-bar-right">
-    <a href="#">中文</a>
+    <span>中文</span>
     <span class="top-sep">|</span>
-    <a href="#">Newsletter</a>
+    <span>Telegram Alerts</span>
     <span class="top-sep">|</span>
-    <a href="#">About</a>
+    <span>API</span>
   </div>
 </div>
 
 <!-- MASTHEAD -->
 <div class="masthead">
   <div class="masthead-inner">
-    <div class="logo">
-      <div class="logo-dot">RD</div>
-      <div>
-        <div class="logo-text">Red<span>Dot</span></div>
-        <div class="logo-tagline">Singapore's News Digest</div>
-      </div>
+    <div class="logo-block">
+      <div class="logo-name">pressrelease<span class="dot-sg">.sg</span></div>
+      <div class="logo-sub">Singapore government press releases — rewritten in plain English</div>
     </div>
     <div class="masthead-right">
       <div class="search-box">
-        <span class="search-icon">⌕</span>
-        <input type="text" placeholder="Search news…" />
+        <span style="color:var(--muted-light);font-size:14px">⌕</span>
+        <input type="text" placeholder="Search press releases…" />
       </div>
+      <button class="subscribe-btn">📬 Get Alerts</button>
     </div>
   </div>
 </div>
@@ -709,43 +735,44 @@
 <!-- NAV -->
 <nav>
   <div class="nav-inner">
-    <div class="nav-item active">Top Stories</div>
-    <div class="nav-item">Singapore</div>
-    <div class="nav-item">Asia</div>
-    <div class="nav-item">World</div>
-    <div class="nav-item">Business</div>
-    <div class="nav-item">Tech</div>
-    <div class="nav-item">Politics</div>
+    <div class="nav-item active">All Releases</div>
+    <div class="nav-item">Housing</div>
     <div class="nav-item">Health</div>
-    <div class="nav-item">Sport</div>
-    <div class="nav-item">CNA Live</div>
+    <div class="nav-item">Economy</div>
+    <div class="nav-item">Transport</div>
+    <div class="nav-item">Education</div>
+    <div class="nav-item">Environment</div>
+    <div class="nav-item">Technology</div>
+    <div class="nav-item">Foreign Affairs</div>
+    <div class="nav-item">Defence</div>
+    <div class="nav-item">Immigration</div>
   </div>
 </nav>
 
 <!-- TICKER -->
 <div class="ticker">
-  <span class="ticker-label">Breaking</span>
+  <span class="ticker-label">New today</span>
   <span class="ticker-inner">
-    <span class="ticker-item">MAS holds interest rates steady as inflation eases to 1.8%</span>
+    <span class="ticker-item"><span class="ticker-agency">HDB</span> May BTO exercise: 6,000 flats across Tengah, Bayshore and Kallang</span>
     <span class="ticker-sep"> · </span>
-    <span class="ticker-item">Budget 2026: GST Vouchers increased to $850 for eligible households</span>
+    <span class="ticker-item"><span class="ticker-agency">MAS</span> Singapore core inflation falls to 1.8% in April 2026</span>
     <span class="ticker-sep"> · </span>
-    <span class="ticker-item">Changi Airport Terminal 5 construction on track for 2030 opening</span>
+    <span class="ticker-item"><span class="ticker-agency">MOH</span> Healthier SG programme extended to all residents aged 18–39</span>
     <span class="ticker-sep"> · </span>
-    <span class="ticker-item">SIA reports record quarterly profit; expands SE Asia routes</span>
+    <span class="ticker-item"><span class="ticker-agency">LTA</span> Cross Island Line Phase 2: stations confirmed at Tuas and Jurong</span>
     <span class="ticker-sep"> · </span>
-    <span class="ticker-item">NDP 2026 theme announced: "Together, We Rise"</span>
+    <span class="ticker-item"><span class="ticker-agency">MTI</span> Singapore GDP grows 3.1% in Q1 2026, led by manufacturing and finance</span>
     <span class="ticker-sep"> · </span>
     <!-- duplicate -->
-    <span class="ticker-item">MAS holds interest rates steady as inflation eases to 1.8%</span>
+    <span class="ticker-item"><span class="ticker-agency">HDB</span> May BTO exercise: 6,000 flats across Tengah, Bayshore and Kallang</span>
     <span class="ticker-sep"> · </span>
-    <span class="ticker-item">Budget 2026: GST Vouchers increased to $850 for eligible households</span>
+    <span class="ticker-item"><span class="ticker-agency">MAS</span> Singapore core inflation falls to 1.8% in April 2026</span>
     <span class="ticker-sep"> · </span>
-    <span class="ticker-item">Changi Airport Terminal 5 construction on track for 2030 opening</span>
+    <span class="ticker-item"><span class="ticker-agency">MOH</span> Healthier SG programme extended to all residents aged 18–39</span>
     <span class="ticker-sep"> · </span>
-    <span class="ticker-item">SIA reports record quarterly profit; expands SE Asia routes</span>
+    <span class="ticker-item"><span class="ticker-agency">LTA</span> Cross Island Line Phase 2: stations confirmed at Tuas and Jurong</span>
     <span class="ticker-sep"> · </span>
-    <span class="ticker-item">NDP 2026 theme announced: "Together, We Rise"</span>
+    <span class="ticker-item"><span class="ticker-agency">MTI</span> Singapore GDP grows 3.1% in Q1 2026, led by manufacturing and finance</span>
     <span class="ticker-sep"> · </span>
   </span>
 </div>
@@ -753,26 +780,24 @@
 <!-- HERO -->
 <div class="hero">
   <div class="hero-main">
-    <div class="hero-img-block">
-      <div class="hero-img-placeholder">🏛️</div>
-      <div class="hero-img-caption">Parliament House, Singapore — Photo: MCI</div>
-    </div>
-    <div class="ai-tag"><span class="ai-dot"></span> AI Digest · 4 sources</div>
-    <div class="category-tag">Singapore · Politics</div>
-    <h1 class="hero-main-title">Singapore Parliament Passes Landmark Digital Infrastructure Bill, Setting New Standards for Data Sovereignty</h1>
-    <p class="hero-summary">The Digital Infrastructure Resilience Bill, passed with broad cross-party support, mandates that critical government data be stored and processed within Singapore's borders. Analysts say the legislation positions the city-state as a regional benchmark for data governance amid rising geopolitical tensions over cloud infrastructure.</p>
-    <div class="article-meta">
-      <span class="source-name">Channel NewsAsia</span>
+    <div class="hero-img hi-1">🏗️</div>
+    <div class="agency-pill"><span class="agency-dot"></span> HDB — Housing & Development Board</div>
+    <h1 class="hero-title">HDB Launches 6,000 New BTO Flats in May 2026 — Here's What You Need to Know</h1>
+    <p class="hero-summary">The Housing Development Board has launched its May 2026 Build-To-Order exercise, offering 6,000 flats across four estates. Tengah gets the largest allocation with 2,400 eco-friendly units, while Bayshore offers a limited batch of waterfront flats starting from $480,000. Kallang/Whampoa and Queenstown round out the exercise with mature estate options. Balloting opens 19 May and closes 26 May 2026.</p>
+    <div class="hero-meta">
+      <span>Published 12 May 2026, 8:00 AM</span>
       <span class="meta-sep">·</span>
-      <span>2 hours ago</span>
+      <span>5 min read</span>
       <span class="meta-sep">·</span>
-      <span>8 min read</span>
+      <span style="display:flex;align-items:center;gap:4px;color:var(--red);font-weight:600;font-size:11px">
+        <span style="width:5px;height:5px;border-radius:50%;background:var(--red);display:inline-block;animation:pulse 2s infinite"></span>
+        AI Rewritten
+      </span>
     </div>
-    <div class="source-badges">
-      <span class="source-badge">CNA</span>
-      <span class="source-badge">Straits Times</span>
-      <span class="source-badge">Today</span>
-      <span class="source-badge">Reuters</span>
+    <a href="#" class="source-link">📄 View original HDB press release →</a>
+    <div class="ai-note">
+      <span class="ai-icon">ℹ️</span>
+      This article was AI-generated from the official HDB press release. Always refer to the original for complete details.
     </div>
   </div>
 
@@ -780,130 +805,203 @@
 
   <div class="hero-sidebar">
     <div class="sidebar-story">
-      <div class="sidebar-thumb st-1">📈</div>
-      <div class="category-tag">Business</div>
-      <div class="sidebar-title">DBS and OCBC post record earnings as regional lending demand surges</div>
-      <div class="sidebar-meta">Straits Times · Business Times · 1h ago</div>
+      <div class="sidebar-agency">📊 MAS</div>
+      <div class="sidebar-title">Singapore inflation hits 3-year low at 1.8% — what this means for your mortgage and groceries</div>
+      <div class="sidebar-meta">
+        <span>12 May · 9:00 AM</span>
+        <a href="#" class="view-release">Original →</a>
+      </div>
     </div>
     <div class="sidebar-story">
-      <div class="sidebar-thumb st-2">✈️</div>
-      <div class="category-tag">Singapore</div>
-      <div class="sidebar-title">Changi Airport handled 70 million passengers in 2025, reclaiming world's best title</div>
-      <div class="sidebar-meta">CNA · Mothership · 3h ago</div>
+      <div class="sidebar-agency">🚇 LTA</div>
+      <div class="sidebar-title">Cross Island Line Phase 2 stations confirmed — full list of stops and opening dates</div>
+      <div class="sidebar-meta">
+        <span>12 May · 7:30 AM</span>
+        <a href="#" class="view-release">Original →</a>
+      </div>
     </div>
     <div class="sidebar-story">
-      <div class="sidebar-thumb st-3">🏥</div>
-      <div class="category-tag">Health</div>
-      <div class="sidebar-title">MOH expands Healthier SG programme to cover all residents under 40</div>
-      <div class="sidebar-meta">Today Online · CNA · 5h ago</div>
+      <div class="sidebar-agency">🏥 MOH</div>
+      <div class="sidebar-title">Healthier SG now covers under-40s — how to register and what's included for free</div>
+      <div class="sidebar-meta">
+        <span>11 May · 5:00 PM</span>
+        <a href="#" class="view-release">Original →</a>
+      </div>
+    </div>
+    <div class="sidebar-story">
+      <div class="sidebar-agency">🎓 MOE</div>
+      <div class="sidebar-title">PSLE scoring changes from 2027: AL grades replaced with descriptive bands</div>
+      <div class="sidebar-meta">
+        <span>11 May · 3:15 PM</span>
+        <a href="#" class="view-release">Original →</a>
+      </div>
     </div>
   </div>
 </div>
 
-<!-- SOURCES BAR -->
-<div class="sources-section">
-  <div class="sources-inner">
-    <div class="sources-label">Filter by source:</div>
-    <div class="source-pill active"><span class="s-dot"></span> All Sources</div>
-    <div class="source-pill"><span class="s-dot"></span> CNA</div>
-    <div class="source-pill"><span class="s-dot"></span> Straits Times</div>
-    <div class="source-pill"><span class="s-dot"></span> Today Online</div>
-    <div class="source-pill"><span class="s-dot"></span> Mothership</div>
-    <div class="source-pill"><span class="s-dot"></span> Business Times</div>
-    <div class="source-pill"><span class="s-dot"></span> Zaobao</div>
-    <div class="source-pill"><span class="s-dot"></span> Reuters</div>
-    <div class="source-pill"><span class="s-dot"></span> BBC</div>
-    <div class="source-pill"><span class="s-dot"></span> SCMP</div>
+<!-- AGENCY FILTER -->
+<div class="agency-filter">
+  <div class="agency-filter-inner">
+    <div class="filter-label">Agency:</div>
+    <div class="agency-chip active"><span class="chip-dot"></span> All</div>
+    <div class="agency-chip">HDB</div>
+    <div class="agency-chip">MOH</div>
+    <div class="agency-chip">MOE</div>
+    <div class="agency-chip">LTA</div>
+    <div class="agency-chip">MAS</div>
+    <div class="agency-chip">MOM</div>
+    <div class="agency-chip">NEA</div>
+    <div class="agency-chip">IMDA</div>
+    <div class="agency-chip">MFA</div>
+    <div class="agency-chip">MTI</div>
+    <div class="agency-chip">ICA</div>
+    <div class="agency-chip">SFA</div>
+    <div class="agency-chip">EMA</div>
+    <div class="agency-chip">MND</div>
+    <div class="agency-chip">PMO</div>
   </div>
 </div>
 
-<!-- LATEST STORIES -->
+<!-- HOW IT WORKS -->
+<div class="how-strip">
+  <div class="how-inner">
+    <div class="how-label">How it works</div>
+    <div class="how-step">
+      <div class="how-num">01 — FETCH</div>
+      <div class="how-title">Monitor 15 agencies</div>
+      <div class="how-desc">We check every Singapore government newsroom every 15 minutes for new press releases.</div>
+    </div>
+    <div class="how-step">
+      <div class="how-num">02 — DETECT</div>
+      <div class="how-title">Spot what's new</div>
+      <div class="how-desc">New releases are automatically queued for processing within minutes of publication.</div>
+    </div>
+    <div class="how-step">
+      <div class="how-num">03 — REWRITE</div>
+      <div class="how-title">Plain English, fast</div>
+      <div class="how-desc">Claude AI rewrites bureaucratic press releases into clear, readable articles for everyday Singaporeans.</div>
+    </div>
+    <div class="how-step">
+      <div class="how-num">04 — PUBLISH</div>
+      <div class="how-title">Article + source link</div>
+      <div class="how-desc">Every article links directly to the official press release so you can always verify.</div>
+    </div>
+  </div>
+</div>
+
+<!-- LATEST RELEASES -->
 <hr class="section-rule" />
-<div class="section-header">
-  <div class="section-title-text"><span class="red-bar"></span> Latest Stories</div>
-  <a href="#" class="see-all">See all stories →</a>
+<div class="section-head">
+  <div class="section-title"><span class="red-bar"></span> Latest Releases Today</div>
+  <a href="#" class="see-all">View all 47 releases →</a>
 </div>
 
 <div class="cards-grid">
   <div class="card">
-    <div class="card-thumb ct-1">🧬</div>
-    <div class="card-cat">Health · Singapore</div>
-    <div class="card-title">NUH and NTU develop AI tool that detects colorectal cancer with 94% accuracy</div>
-    <div class="card-summary">Researchers from the National University Hospital and NTU have created a machine-learning model trained on 15 years of local patient data, outperforming existing screening methods in early-stage detection.</div>
-    <div class="card-meta">
-      <span>CNA · 45m ago</span>
-      <span class="card-ai"><span class="ai-dot"></span> AI Written</span>
+    <div class="card-img ci-1">👷</div>
+    <div class="card-agency">MOM — Manpower</div>
+    <div class="card-title">New S Pass salary thresholds from September 2026 — full breakdown by sector</div>
+    <div class="card-summary">The Ministry of Manpower is raising minimum qualifying salaries for S Pass holders across all sectors. The general threshold rises from $3,150 to $3,300 per month, with financial services pegged higher at $3,650.</div>
+    <div class="card-footer">
+      <span class="card-time">Today, 10:30 AM</span>
+      <a href="#" class="card-source-link">Original →</a>
     </div>
   </div>
 
   <div class="card">
-    <div class="card-thumb ct-2">🏗️</div>
-    <div class="card-cat">Singapore · Property</div>
-    <div class="card-title">HDB launches 6,000 BTO flats in Tengah and Bayshore in May exercise</div>
-    <div class="card-summary">The latest Build-To-Order launch includes prime location flats in the upcoming Tengah eco-town and waterfront units at the new Bayshore precinct, with balloting opening next week.</div>
-    <div class="card-meta">
-      <span>Straits Times · 1h ago</span>
-      <span class="card-ai"><span class="ai-dot"></span> AI Written</span>
+    <div class="card-img ci-2">♻️</div>
+    <div class="card-agency">NEA — Environment</div>
+    <div class="card-title">Mandatory beverage container return scheme to launch island-wide in July 2026</div>
+    <div class="card-summary">NEA confirmed the Reverse Vending Machine network will cover all 26 HDB towns and major malls by July. Consumers get 10 cents back per eligible plastic bottle or aluminium can returned.</div>
+    <div class="card-footer">
+      <span class="card-time">Today, 9:45 AM</span>
+      <a href="#" class="card-source-link">Original →</a>
     </div>
   </div>
 
   <div class="card">
-    <div class="card-thumb ct-3">🌏</div>
-    <div class="card-cat">Asia · Geopolitics</div>
-    <div class="card-title">ASEAN leaders agree on South China Sea code of conduct framework in Kuala Lumpur</div>
-    <div class="card-summary">A non-binding framework on conduct in contested waters was endorsed at the ASEAN Foreign Ministers' meeting, marking the first substantive agreement in over a decade of stalled negotiations.</div>
-    <div class="card-meta">
-      <span>Reuters · 2h ago</span>
-      <span class="card-ai"><span class="ai-dot"></span> AI Written</span>
+    <div class="card-img ci-3">💻</div>
+    <div class="card-agency">IMDA — Digital</div>
+    <div class="card-title">Singapore Digital Connectivity Blueprint: 10Gbps broadband for all homes by 2028</div>
+    <div class="card-summary">IMDA has committed to upgrading the national broadband network to deliver 10 gigabits per second to every residential address, with trials beginning in Punggol and Tengah districts from Q3 2026.</div>
+    <div class="card-footer">
+      <span class="card-time">Today, 8:15 AM</span>
+      <a href="#" class="card-source-link">Original →</a>
     </div>
   </div>
 </div>
 
-<!-- BUSINESS SECTION -->
+<!-- ALL TODAY LIST -->
 <hr class="section-rule" />
-<div class="section-header">
-  <div class="section-title-text"><span class="red-bar"></span> Business & Markets</div>
-  <a href="#" class="see-all">See all →</a>
+<div class="section-head">
+  <div class="section-title"><span class="red-bar"></span> All Releases — 12 May 2026</div>
+  <a href="#" class="see-all">RSS feed →</a>
 </div>
 
-<div class="biz-strip">
-  <div class="biz-main">
-    <div class="biz-main-img">💹</div>
-    <div class="category-tag">Markets</div>
-    <div class="biz-main-title">STI closes at 3-year high as foreign institutional investors pour $2.4B into Singapore equities</div>
-    <div class="article-meta" style="margin-top:0">
-      <span class="source-name">Business Times</span>
-      <span class="meta-sep">·</span>
-      <span>3h ago</span>
-      <span class="meta-sep">·</span>
-      <span class="card-ai" style="margin-left:4px"><span class="ai-dot"></span> AI Written</span>
+<div class="latest-list">
+  <div class="latest-item">
+    <div class="latest-time">10:30 AM</div>
+    <div>
+      <div class="latest-agency-badge">MOM</div>
+      <div class="latest-title">New S Pass and EP salary thresholds from September 2026 — sector breakdown</div>
     </div>
+    <a href="#" class="latest-link">Original release →</a>
   </div>
-
-  <div class="biz-side">
-    <div class="biz-item">
-      <div class="card-cat">Startups</div>
-      <div class="biz-item-title">Grab acquires Indonesian fintech startup Oy! for $340M, expanding regional payments</div>
-      <div class="biz-item-meta">SCMP · 4h ago</div>
+  <div class="latest-item">
+    <div class="latest-time">9:45 AM</div>
+    <div>
+      <div class="latest-agency-badge">NEA</div>
+      <div class="latest-title">Reverse vending machine scheme goes island-wide from July 2026</div>
     </div>
-    <div class="biz-item">
-      <div class="card-cat">Energy</div>
-      <div class="biz-item-title">Sembcorp wins contract to build Southeast Asia's largest green hydrogen plant</div>
-      <div class="biz-item-meta">Business Times · 5h ago</div>
-    </div>
+    <a href="#" class="latest-link">Original release →</a>
   </div>
-
-  <div class="biz-side">
-    <div class="biz-item">
-      <div class="card-cat">Retail</div>
-      <div class="biz-item-title">Sheng Siong expands into Malaysia with first JB outlet, eyes 5 more by 2027</div>
-      <div class="biz-item-meta">Today Online · 6h ago</div>
+  <div class="latest-item">
+    <div class="latest-time">9:00 AM</div>
+    <div>
+      <div class="latest-agency-badge">MAS</div>
+      <div class="latest-title">MAS Monetary Policy Statement: Singapore dollar NEER slope unchanged</div>
     </div>
-    <div class="biz-item">
-      <div class="card-cat">Aviation</div>
-      <div class="biz-item-title">SIA's new premium economy cabin on A350s wins "Best in Class" at Skytrax 2026</div>
-      <div class="biz-item-meta">Mothership · 7h ago</div>
+    <a href="#" class="latest-link">Original release →</a>
+  </div>
+  <div class="latest-item">
+    <div class="latest-time">8:15 AM</div>
+    <div>
+      <div class="latest-agency-badge">IMDA</div>
+      <div class="latest-title">Singapore Digital Connectivity Blueprint 2028: 10Gbps broadband for all homes</div>
     </div>
+    <a href="#" class="latest-link">Original release →</a>
+  </div>
+  <div class="latest-item">
+    <div class="latest-time">8:00 AM</div>
+    <div>
+      <div class="latest-agency-badge">HDB</div>
+      <div class="latest-title">May 2026 BTO Exercise: 6,000 flats in Tengah, Bayshore, Kallang/Whampoa and Queenstown</div>
+    </div>
+    <a href="#" class="latest-link">Original release →</a>
+  </div>
+  <div class="latest-item">
+    <div class="latest-time">7:30 AM</div>
+    <div>
+      <div class="latest-agency-badge">LTA</div>
+      <div class="latest-title">Cross Island Line Phase 2: confirmed station locations and 2031 opening timeline</div>
+    </div>
+    <a href="#" class="latest-link">Original release →</a>
+  </div>
+  <div class="latest-item">
+    <div class="latest-time">Yesterday</div>
+    <div>
+      <div class="latest-agency-badge">MOH</div>
+      <div class="latest-title">Healthier SG programme expanded to residents aged 18 to 39 from 1 July 2026</div>
+    </div>
+    <a href="#" class="latest-link">Original release →</a>
+  </div>
+  <div class="latest-item">
+    <div class="latest-time">Yesterday</div>
+    <div>
+      <div class="latest-agency-badge">MOE</div>
+      <div class="latest-title">PSLE scoring framework changes from 2027: shift to descriptive grade bands</div>
+    </div>
+    <a href="#" class="latest-link">Original release →</a>
   </div>
 </div>
 
@@ -911,29 +1009,43 @@
 <footer>
   <div class="footer-inner">
     <div>
-      <div class="footer-logo">Red<span>Dot</span></div>
-      <div class="footer-tagline">Singapore's AI-powered news digest. Aggregating and summarising the best of local and regional journalism — so you never miss what matters.</div>
+      <div class="footer-brand-name">pressrelease<span>.sg</span></div>
+      <div class="footer-desc" style="margin-top:8px">
+        Singapore government press releases, rewritten in plain English. Every article links to the official source. Updated automatically as agencies publish.<br /><br />
+        Not affiliated with the Singapore Government.
+      </div>
     </div>
     <div>
-      <div class="footer-sources-label">News Sources</div>
-      <div class="footer-sources">
-        <span class="footer-source">Channel NewsAsia</span>
-        <span class="footer-source">The Straits Times</span>
-        <span class="footer-source">Today Online</span>
-        <span class="footer-source">Mothership.sg</span>
-        <span class="footer-source">The Business Times</span>
-        <span class="footer-source">Lianhe Zaobao</span>
-        <span class="footer-source">Reuters Asia</span>
-        <span class="footer-source">BBC Asia</span>
-        <span class="footer-source">South China Morning Post</span>
+      <div class="footer-agencies-label">Agencies monitored</div>
+      <div class="footer-agencies">
+        <span class="footer-agency">PMO</span>
+        <span class="footer-agency">MOH</span>
+        <span class="footer-agency">MOE</span>
+        <span class="footer-agency">HDB</span>
+        <span class="footer-agency">LTA</span>
+        <span class="footer-agency">MAS</span>
+        <span class="footer-agency">MOM</span>
+        <span class="footer-agency">NEA</span>
+        <span class="footer-agency">IMDA</span>
+        <span class="footer-agency">MFA</span>
+        <span class="footer-agency">MTI</span>
+        <span class="footer-agency">ICA</span>
+        <span class="footer-agency">SFA</span>
+        <span class="footer-agency">EMA</span>
+        <span class="footer-agency">MND</span>
+        <span class="footer-agency">MINDEF</span>
       </div>
     </div>
   </div>
   <div class="footer-bottom">
-    <span>© 2026 RedDot News · Articles AI-summarised by Claude · Original content belongs to respective publishers</span>
-    <span>Privacy · Terms · Contact</span>
+    <span>© 2026 pressrelease.sg · Articles AI-rewritten from official Singapore government press releases · All original content © respective agencies</span>
+    <span>Privacy · Terms · Contact · API</span>
   </div>
 </footer>
+
+<style>
+  @keyframes pulse { 0%,100%{opacity:1} 50%{opacity:0.3} }
+</style>
 
 </body>
 </html>
