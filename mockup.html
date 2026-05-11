@@ -3,82 +3,122 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>NewsForge — Mockup</title>
+  <title>RedDot — Singapore News</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Playfair+Display:wght@400;600;700;800&family=Inter:wght@400;500;600&display=swap" rel="stylesheet" />
   <style>
     *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
 
     :root {
-      --bg: #0f0f0f;
-      --surface: #1a1a1a;
-      --surface2: #242424;
-      --border: #2e2e2e;
-      --accent: #e8ff00;
-      --accent2: #00d4aa;
-      --text: #f0f0f0;
-      --muted: #888;
-      --tag-bg: #1e2a1e;
-      --tag-text: #00d4aa;
+      --red: #C8102E;
+      --red-dark: #a00d24;
+      --red-light: #fdf2f4;
+      --bg: #ffffff;
+      --surface: #f8f7f5;
+      --border: #e5e3df;
+      --border-dark: #ccc9c4;
+      --text: #1a1a1a;
+      --muted: #666;
+      --muted-light: #999;
+      --serif: 'Playfair Display', Georgia, serif;
+      --sans: 'Inter', system-ui, sans-serif;
     }
 
     body {
       background: var(--bg);
       color: var(--text);
-      font-family: 'Inter', system-ui, sans-serif;
+      font-family: var(--sans);
       font-size: 15px;
       line-height: 1.6;
     }
 
-    /* ── NAV ── */
-    nav {
-      position: sticky;
-      top: 0;
-      z-index: 100;
+    a { text-decoration: none; color: inherit; }
+
+    /* ── TOP BAR ── */
+    .top-bar {
+      background: var(--red);
+      color: #fff;
+      font-family: var(--sans);
+      font-size: 11px;
+      font-weight: 500;
+      padding: 6px 32px;
       display: flex;
       align-items: center;
       justify-content: space-between;
-      padding: 0 32px;
-      height: 56px;
-      background: rgba(15,15,15,0.92);
-      backdrop-filter: blur(10px);
+    }
+    .top-bar-left { display: flex; align-items: center; gap: 16px; opacity: 0.9; }
+    .top-bar-right { display: flex; align-items: center; gap: 16px; opacity: 0.9; }
+    .top-bar a { color: #fff; }
+    .top-bar a:hover { text-decoration: underline; }
+    .top-sep { opacity: 0.4; }
+
+    /* ── MASTHEAD ── */
+    .masthead {
       border-bottom: 1px solid var(--border);
+      padding: 0 32px;
+    }
+    .masthead-inner {
+      max-width: 1200px;
+      margin: 0 auto;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      padding: 16px 0 12px;
     }
 
     .logo {
-      font-size: 18px;
-      font-weight: 800;
-      letter-spacing: -0.5px;
-      color: var(--accent);
-    }
-    .logo span { color: var(--text); }
-
-    .nav-links {
       display: flex;
-      gap: 28px;
-      list-style: none;
+      align-items: center;
+      gap: 10px;
     }
-    .nav-links a {
+    .logo-dot {
+      width: 36px;
+      height: 36px;
+      background: var(--red);
+      border-radius: 50%;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      color: #fff;
+      font-family: var(--serif);
+      font-weight: 800;
+      font-size: 16px;
+      letter-spacing: -1px;
+      flex-shrink: 0;
+    }
+    .logo-text {
+      font-family: var(--serif);
+      font-size: 28px;
+      font-weight: 800;
+      letter-spacing: -1px;
+      color: var(--text);
+      line-height: 1;
+    }
+    .logo-text span { color: var(--red); }
+    .logo-tagline {
+      font-size: 10px;
       color: var(--muted);
-      text-decoration: none;
-      font-size: 13px;
+      font-family: var(--sans);
       font-weight: 500;
-      transition: color .15s;
+      letter-spacing: 0.5px;
+      text-transform: uppercase;
+      margin-top: 2px;
     }
-    .nav-links a:hover, .nav-links a.active { color: var(--text); }
 
-    .nav-right {
+    .masthead-right {
       display: flex;
       align-items: center;
       gap: 12px;
     }
-
     .search-box {
       display: flex;
       align-items: center;
-      background: var(--surface2);
-      border: 1px solid var(--border);
-      border-radius: 8px;
-      padding: 6px 12px;
+      border: 1px solid var(--border-dark);
+      border-radius: 4px;
+      padding: 7px 12px;
       gap: 8px;
+      background: var(--surface);
     }
     .search-box input {
       background: none;
@@ -87,574 +127,812 @@
       color: var(--text);
       font-size: 13px;
       width: 180px;
+      font-family: var(--sans);
     }
-    .search-box input::placeholder { color: var(--muted); }
-    .search-icon { color: var(--muted); font-size: 13px; }
+    .search-box input::placeholder { color: var(--muted-light); }
+    .search-icon { color: var(--muted); font-size: 14px; }
+
+    /* ── NAV ── */
+    nav {
+      background: var(--bg);
+      border-bottom: 3px solid var(--red);
+    }
+    .nav-inner {
+      max-width: 1200px;
+      margin: 0 auto;
+      padding: 0 32px;
+      display: flex;
+      align-items: center;
+      gap: 0;
+      overflow-x: auto;
+      scrollbar-width: none;
+    }
+    .nav-inner::-webkit-scrollbar { display: none; }
+
+    .nav-item {
+      font-family: var(--sans);
+      font-size: 13px;
+      font-weight: 600;
+      color: var(--muted);
+      padding: 12px 16px;
+      white-space: nowrap;
+      cursor: pointer;
+      border-bottom: 3px solid transparent;
+      margin-bottom: -3px;
+      transition: color .15s, border-color .15s;
+      letter-spacing: 0.2px;
+    }
+    .nav-item:hover { color: var(--text); }
+    .nav-item.active { color: var(--red); border-bottom-color: var(--red); }
+
+    /* ── TICKER ── */
+    .ticker {
+      background: var(--surface);
+      border-bottom: 1px solid var(--border);
+      padding: 7px 0;
+      overflow: hidden;
+      white-space: nowrap;
+    }
+    .ticker-label {
+      display: inline-block;
+      background: var(--red);
+      color: #fff;
+      font-size: 10px;
+      font-weight: 700;
+      letter-spacing: 1px;
+      text-transform: uppercase;
+      padding: 2px 10px;
+      margin-right: 16px;
+      margin-left: 32px;
+      vertical-align: middle;
+    }
+    .ticker-inner {
+      display: inline-flex;
+      gap: 48px;
+      animation: scroll 35s linear infinite;
+    }
+    @keyframes scroll {
+      0% { transform: translateX(0); }
+      100% { transform: translateX(-50%); }
+    }
+    .ticker-item { font-size: 12px; font-weight: 500; color: var(--muted); vertical-align: middle; }
+    .ticker-sep { color: var(--red); opacity: 0.5; }
+
+    /* ── LAYOUT ── */
+    .container {
+      max-width: 1200px;
+      margin: 0 auto;
+      padding: 0 32px;
+    }
 
     /* ── HERO ── */
     .hero {
       display: grid;
-      grid-template-columns: 1fr 340px;
-      gap: 24px;
+      grid-template-columns: 1fr 1px 340px;
+      gap: 0;
+      margin: 28px auto;
       max-width: 1200px;
-      margin: 32px auto;
       padding: 0 32px;
     }
 
-    .hero-main {
-      position: relative;
-      border-radius: 14px;
-      overflow: hidden;
-      background: var(--surface);
-      border: 1px solid var(--border);
-      cursor: pointer;
+    .hero-divider {
+      background: var(--border);
+      margin: 0 28px;
     }
-    .hero-main:hover .hero-img { transform: scale(1.02); }
 
-    .hero-img {
-      width: 100%;
-      height: 380px;
-      object-fit: cover;
-      display: block;
-      transition: transform .3s ease;
-      background: linear-gradient(135deg, #1a2a1a 0%, #0a1a2a 50%, #1a0a2a 100%);
+    .hero-main { cursor: pointer; }
+    .hero-main:hover .hero-main-title { color: var(--red); }
+
+    .hero-img-block {
+      position: relative;
+      margin-bottom: 16px;
+      overflow: hidden;
+      border-radius: 2px;
     }
     .hero-img-placeholder {
       width: 100%;
-      height: 380px;
-      background: linear-gradient(135deg, #0d1f0d 0%, #0a1525 50%, #1a0d25 100%);
+      height: 340px;
+      background: linear-gradient(160deg, #f0ebe6 0%, #e8e0d8 100%);
       display: flex;
       align-items: center;
       justify-content: center;
-      font-size: 48px;
-      opacity: 0.4;
+      font-size: 64px;
+      opacity: 0.5;
     }
-
-    .hero-overlay {
+    .hero-img-caption {
       position: absolute;
       bottom: 0; left: 0; right: 0;
-      background: linear-gradient(to top, rgba(0,0,0,0.95) 0%, transparent 100%);
-      padding: 32px 24px 24px;
+      background: rgba(0,0,0,0.55);
+      color: #fff;
+      font-size: 10px;
+      padding: 4px 8px;
+      font-style: italic;
     }
 
-    .ai-badge {
+    .ai-tag {
       display: inline-flex;
       align-items: center;
-      gap: 5px;
-      background: var(--accent);
-      color: #000;
+      gap: 4px;
+      background: var(--red);
+      color: #fff;
+      font-size: 9px;
+      font-weight: 700;
+      letter-spacing: 1px;
+      text-transform: uppercase;
+      padding: 3px 7px;
+      margin-bottom: 10px;
+      border-radius: 2px;
+    }
+    .ai-dot {
+      width: 5px;
+      height: 5px;
+      border-radius: 50%;
+      background: #fff;
+      animation: pulse 2s infinite;
+    }
+    @keyframes pulse { 0%,100%{opacity:1} 50%{opacity:0.3} }
+
+    .category-tag {
+      display: inline-block;
       font-size: 10px;
       font-weight: 700;
-      letter-spacing: 0.8px;
-      padding: 3px 8px;
-      border-radius: 4px;
+      letter-spacing: 1px;
       text-transform: uppercase;
-      margin-bottom: 10px;
-    }
-
-    .hero-overlay h1 {
-      font-size: 24px;
-      font-weight: 700;
-      line-height: 1.3;
+      color: var(--red);
       margin-bottom: 8px;
+      font-family: var(--sans);
     }
 
-    .hero-meta {
+    .hero-main-title {
+      font-family: var(--serif);
+      font-size: 30px;
+      font-weight: 700;
+      line-height: 1.25;
+      margin-bottom: 12px;
+      transition: color .15s;
+    }
+
+    .hero-summary {
+      font-size: 14px;
+      color: var(--muted);
+      line-height: 1.7;
+      margin-bottom: 14px;
+    }
+
+    .article-meta {
       display: flex;
       align-items: center;
-      gap: 12px;
-      font-size: 12px;
-      color: var(--muted);
-    }
-
-    .source-chip {
-      display: inline-flex;
-      align-items: center;
-      gap: 5px;
-      background: rgba(255,255,255,0.08);
-      padding: 3px 8px;
-      border-radius: 20px;
+      gap: 10px;
       font-size: 11px;
-      color: #bbb;
+      color: var(--muted-light);
+      flex-wrap: wrap;
     }
-    .source-dot {
-      width: 6px;
-      height: 6px;
-      border-radius: 50%;
-      background: var(--accent2);
+    .source-name { font-weight: 600; color: var(--muted); }
+    .meta-sep { color: var(--border-dark); }
+
+    .source-badges {
+      display: flex;
+      gap: 6px;
+      margin-top: 10px;
+      flex-wrap: wrap;
+    }
+    .source-badge {
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: 3px;
+      font-size: 10px;
+      font-weight: 600;
+      color: var(--muted);
+      padding: 2px 8px;
+      font-family: var(--sans);
     }
 
     /* Hero sidebar */
     .hero-sidebar {
       display: flex;
       flex-direction: column;
-      gap: 12px;
+      gap: 0;
     }
 
-    .sidebar-card {
-      background: var(--surface);
-      border: 1px solid var(--border);
-      border-radius: 12px;
-      padding: 16px;
+    .sidebar-story {
+      padding: 0 0 16px;
+      border-bottom: 1px solid var(--border);
+      margin-bottom: 16px;
       cursor: pointer;
-      transition: border-color .15s;
-      display: flex;
-      gap: 14px;
     }
-    .sidebar-card:hover { border-color: #444; }
+    .sidebar-story:last-child { border-bottom: none; margin-bottom: 0; }
+    .sidebar-story:hover .sidebar-title { color: var(--red); }
 
     .sidebar-thumb {
-      width: 70px;
-      height: 70px;
-      border-radius: 8px;
-      flex-shrink: 0;
+      width: 100%;
+      height: 90px;
+      border-radius: 2px;
       display: flex;
       align-items: center;
       justify-content: center;
-      font-size: 24px;
+      font-size: 28px;
+      margin-bottom: 10px;
     }
-    .thumb-1 { background: linear-gradient(135deg, #1a2a0a, #0a2a1a); }
-    .thumb-2 { background: linear-gradient(135deg, #2a0a0a, #1a0a2a); }
-    .thumb-3 { background: linear-gradient(135deg, #0a0a2a, #1a2a2a); }
+    .st-1 { background: linear-gradient(135deg, #f5f0eb, #ede5dc); }
+    .st-2 { background: linear-gradient(135deg, #ebf0f5, #dce5ed); }
+    .st-3 { background: linear-gradient(135deg, #f5ebeb, #eddcdc); }
 
-    .sidebar-content h3 {
-      font-size: 13px;
-      font-weight: 600;
-      line-height: 1.4;
+    .sidebar-title {
+      font-family: var(--serif);
+      font-size: 15px;
+      font-weight: 700;
+      line-height: 1.35;
       margin-bottom: 6px;
+      transition: color .15s;
     }
-    .sidebar-meta {
-      font-size: 11px;
-      color: var(--muted);
-    }
+    .sidebar-meta { font-size: 11px; color: var(--muted-light); }
 
-    /* ── SECTION ── */
-    .section {
+    /* ── SECTION DIVIDER ── */
+    .section-rule {
       max-width: 1200px;
-      margin: 0 auto 48px;
+      margin: 0 auto 24px;
       padding: 0 32px;
+      border: none;
+      border-top: 2px solid var(--text);
     }
 
     .section-header {
+      max-width: 1200px;
+      margin: 0 auto 18px;
+      padding: 0 32px;
       display: flex;
-      align-items: center;
+      align-items: baseline;
       justify-content: space-between;
-      margin-bottom: 20px;
     }
-
-    .section-title {
+    .section-title-text {
+      font-family: var(--serif);
+      font-size: 20px;
+      font-weight: 800;
+      color: var(--text);
       display: flex;
       align-items: center;
       gap: 10px;
-      font-size: 16px;
-      font-weight: 700;
     }
-    .section-title::before {
-      content: '';
-      display: block;
-      width: 3px;
-      height: 18px;
-      background: var(--accent);
+    .section-title-text .red-bar {
+      display: inline-block;
+      width: 4px;
+      height: 22px;
+      background: var(--red);
       border-radius: 2px;
     }
-
     .see-all {
-      font-size: 12px;
-      color: var(--muted);
-      text-decoration: none;
-      border: 1px solid var(--border);
-      padding: 4px 12px;
-      border-radius: 6px;
-      transition: all .15s;
-    }
-    .see-all:hover { color: var(--text); border-color: #444; }
-
-    /* Cards grid */
-    .cards-grid {
-      display: grid;
-      grid-template-columns: repeat(3, 1fr);
-      gap: 16px;
-    }
-
-    .card {
-      background: var(--surface);
-      border: 1px solid var(--border);
-      border-radius: 12px;
-      overflow: hidden;
-      cursor: pointer;
-      transition: transform .15s, border-color .15s;
-    }
-    .card:hover { transform: translateY(-2px); border-color: #444; }
-
-    .card-thumb {
-      height: 140px;
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      font-size: 36px;
-    }
-    .ct-1 { background: linear-gradient(135deg, #0d1f0d, #152515); }
-    .ct-2 { background: linear-gradient(135deg, #1f0d0d, #251515); }
-    .ct-3 { background: linear-gradient(135deg, #0d0d1f, #151525); }
-    .ct-4 { background: linear-gradient(135deg, #1f1a0d, #25200f); }
-    .ct-5 { background: linear-gradient(135deg, #0d1f1f, #152525); }
-    .ct-6 { background: linear-gradient(135deg, #1a0d1f, #200f25); }
-
-    .card-body { padding: 14px; }
-
-    .tag {
-      display: inline-block;
-      background: var(--tag-bg);
-      color: var(--tag-text);
-      font-size: 10px;
-      font-weight: 600;
-      letter-spacing: 0.5px;
-      padding: 2px 7px;
-      border-radius: 4px;
-      text-transform: uppercase;
-      margin-bottom: 8px;
-    }
-    .tag.red { background: #2a0e0e; color: #ff6b6b; }
-    .tag.blue { background: #0e1a2a; color: #6bb5ff; }
-    .tag.yellow { background: #2a240e; color: #ffd166; }
-    .tag.purple { background: #1a0e2a; color: #c77dff; }
-
-    .card-body h3 {
-      font-size: 14px;
-      font-weight: 600;
-      line-height: 1.4;
-      margin-bottom: 8px;
-    }
-
-    .card-body p {
-      font-size: 12px;
-      color: var(--muted);
-      line-height: 1.5;
-      margin-bottom: 12px;
-      display: -webkit-box;
-      -webkit-line-clamp: 2;
-      -webkit-box-orient: vertical;
-      overflow: hidden;
-    }
-
-    .card-footer {
-      display: flex;
-      align-items: center;
-      justify-content: space-between;
       font-size: 11px;
-      color: var(--muted);
-    }
-
-    .ai-indicator {
-      display: flex;
-      align-items: center;
-      gap: 4px;
-      color: var(--accent);
-      font-size: 10px;
       font-weight: 600;
+      color: var(--red);
+      letter-spacing: 0.3px;
+      font-family: var(--sans);
     }
-    .ai-dot {
-      width: 5px;
-      height: 5px;
-      border-radius: 50%;
-      background: var(--accent);
-      animation: pulse 2s infinite;
-    }
-    @keyframes pulse {
-      0%, 100% { opacity: 1; }
-      50% { opacity: 0.3; }
-    }
+    .see-all:hover { text-decoration: underline; }
 
-    /* ── SOURCES BAR ── */
-    .sources-bar {
+    /* ── CARDS ── */
+    .cards-grid {
       max-width: 1200px;
       margin: 0 auto 40px;
       padding: 0 32px;
+      display: grid;
+      grid-template-columns: repeat(3, 1fr);
+      gap: 0;
     }
 
-    .sources-label {
-      font-size: 11px;
-      font-weight: 600;
-      color: var(--muted);
-      text-transform: uppercase;
-      letter-spacing: 1px;
+    .card {
+      padding: 0 20px 20px 0;
+      border-right: 1px solid var(--border);
+      margin-right: 0;
+      cursor: pointer;
+    }
+    .card:last-child { border-right: none; padding-right: 0; }
+    .card:nth-child(2) { padding-left: 20px; }
+    .card:nth-child(3) { padding-left: 20px; }
+    .card:hover .card-title { color: var(--red); }
+
+    .card-thumb {
+      width: 100%;
+      height: 130px;
+      border-radius: 2px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 32px;
       margin-bottom: 12px;
     }
+    .ct-1 { background: linear-gradient(135deg, #f5f0eb, #ede5dc); }
+    .ct-2 { background: linear-gradient(135deg, #ebf5eb, #dcedc); }
+    .ct-3 { background: linear-gradient(135deg, #ebf0f5, #dce5ed); }
+    .ct-4 { background: linear-gradient(135deg, #f5f5eb, #ededdc); }
+    .ct-5 { background: linear-gradient(135deg, #f5ebf0, #eddce5); }
+    .ct-6 { background: linear-gradient(135deg, #f0f5eb, #e5eddc); }
 
-    .sources-list {
+    .card-cat {
+      font-size: 10px;
+      font-weight: 700;
+      letter-spacing: 1px;
+      text-transform: uppercase;
+      color: var(--red);
+      margin-bottom: 6px;
+      font-family: var(--sans);
+    }
+    .card-title {
+      font-family: var(--serif);
+      font-size: 16px;
+      font-weight: 700;
+      line-height: 1.35;
+      margin-bottom: 8px;
+      transition: color .15s;
+    }
+    .card-summary {
+      font-size: 12px;
+      color: var(--muted);
+      line-height: 1.6;
+      margin-bottom: 10px;
+      display: -webkit-box;
+      -webkit-line-clamp: 3;
+      -webkit-box-orient: vertical;
+      overflow: hidden;
+    }
+    .card-meta {
       display: flex;
-      gap: 10px;
-      flex-wrap: wrap;
+      align-items: center;
+      justify-content: space-between;
+      font-size: 11px;
+      color: var(--muted-light);
+    }
+    .card-ai {
+      display: flex;
+      align-items: center;
+      gap: 4px;
+      font-size: 10px;
+      font-weight: 600;
+      color: var(--red);
+      opacity: 0.7;
     }
 
+    /* ── SOURCES SECTION ── */
+    .sources-section {
+      background: var(--surface);
+      border-top: 1px solid var(--border);
+      border-bottom: 1px solid var(--border);
+      padding: 16px 32px;
+      margin-bottom: 32px;
+    }
+    .sources-inner {
+      max-width: 1200px;
+      margin: 0 auto;
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      flex-wrap: wrap;
+    }
+    .sources-label {
+      font-size: 10px;
+      font-weight: 700;
+      letter-spacing: 1px;
+      text-transform: uppercase;
+      color: var(--muted);
+      flex-shrink: 0;
+      margin-right: 4px;
+    }
     .source-pill {
       display: flex;
       align-items: center;
-      gap: 6px;
-      background: var(--surface2);
-      border: 1px solid var(--border);
-      border-radius: 20px;
-      padding: 5px 12px;
-      font-size: 12px;
+      gap: 5px;
+      background: var(--bg);
+      border: 1px solid var(--border-dark);
+      border-radius: 3px;
+      padding: 4px 10px;
+      font-size: 11px;
+      font-weight: 600;
       color: var(--muted);
       cursor: pointer;
       transition: all .15s;
+      font-family: var(--sans);
     }
-    .source-pill:hover, .source-pill.active {
-      border-color: var(--accent);
-      color: var(--text);
-    }
-    .source-pill.active .source-dot { background: var(--accent); }
+    .source-pill:hover { border-color: var(--red); color: var(--red); }
+    .source-pill.active { background: var(--red); border-color: var(--red); color: #fff; }
+    .s-dot { width: 5px; height: 5px; border-radius: 50%; background: currentColor; opacity: 0.6; }
 
-    /* ── TICKER ── */
-    .ticker {
-      background: var(--accent);
-      color: #000;
-      padding: 8px 0;
-      overflow: hidden;
-      white-space: nowrap;
-      margin-bottom: 0;
+    /* ── BUSINESS STRIP ── */
+    .biz-strip {
+      max-width: 1200px;
+      margin: 0 auto 40px;
+      padding: 0 32px;
+      display: grid;
+      grid-template-columns: 2fr 1fr 1fr;
+      gap: 24px;
     }
-    .ticker-inner {
-      display: inline-flex;
-      gap: 60px;
-      animation: scroll 30s linear infinite;
+    .biz-main { border-right: 1px solid var(--border); padding-right: 24px; }
+    .biz-main:hover .biz-main-title { color: var(--red); }
+    .biz-main-img {
+      width: 100%;
+      height: 160px;
+      border-radius: 2px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 40px;
+      margin-bottom: 12px;
+      background: linear-gradient(135deg, #f5f0eb, #ede5dc);
     }
-    @keyframes scroll {
-      0% { transform: translateX(0); }
-      100% { transform: translateX(-50%); }
+    .biz-main-title {
+      font-family: var(--serif);
+      font-size: 20px;
+      font-weight: 700;
+      line-height: 1.3;
+      margin-bottom: 8px;
+      cursor: pointer;
+      transition: color .15s;
     }
-    .ticker-item {
-      font-size: 12px;
-      font-weight: 600;
-      letter-spacing: 0.3px;
+    .biz-side {
+      display: flex;
+      flex-direction: column;
+      gap: 14px;
     }
-    .ticker-sep { opacity: 0.4; }
+    .biz-item {
+      border-bottom: 1px solid var(--border);
+      padding-bottom: 14px;
+      cursor: pointer;
+    }
+    .biz-item:last-child { border-bottom: none; }
+    .biz-item:hover .biz-item-title { color: var(--red); }
+    .biz-item-title {
+      font-family: var(--serif);
+      font-size: 14px;
+      font-weight: 700;
+      line-height: 1.4;
+      margin-bottom: 4px;
+      transition: color .15s;
+    }
+    .biz-item-meta { font-size: 11px; color: var(--muted-light); }
 
     /* ── FOOTER ── */
     footer {
-      border-top: 1px solid var(--border);
-      padding: 24px 32px;
-      text-align: center;
-      font-size: 12px;
-      color: var(--muted);
+      background: var(--text);
+      color: #aaa;
+      padding: 32px;
+    }
+    .footer-inner {
+      max-width: 1200px;
+      margin: 0 auto;
+      display: grid;
+      grid-template-columns: 1fr 2fr;
+      gap: 48px;
+      align-items: start;
+    }
+    .footer-logo {
+      font-family: var(--serif);
+      font-size: 22px;
+      font-weight: 800;
+      color: #fff;
+      margin-bottom: 8px;
+    }
+    .footer-logo span { color: var(--red); }
+    .footer-tagline { font-size: 12px; line-height: 1.6; max-width: 240px; }
+    .footer-sources-label {
+      font-size: 10px;
+      font-weight: 700;
+      letter-spacing: 1px;
+      text-transform: uppercase;
+      color: #777;
+      margin-bottom: 10px;
+    }
+    .footer-sources {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 8px;
+    }
+    .footer-source {
+      font-size: 11px;
+      color: #888;
+      background: #2a2a2a;
+      padding: 3px 9px;
+      border-radius: 3px;
+    }
+    .footer-bottom {
+      max-width: 1200px;
+      margin: 24px auto 0;
+      padding-top: 16px;
+      border-top: 1px solid #333;
+      font-size: 11px;
+      color: #555;
+      display: flex;
+      justify-content: space-between;
     }
 
-    /* Responsive */
+    /* ── RESPONSIVE ── */
     @media (max-width: 768px) {
-      .hero { grid-template-columns: 1fr; }
-      .hero-sidebar { flex-direction: row; overflow-x: auto; }
-      .sidebar-card { min-width: 240px; }
-      .cards-grid { grid-template-columns: 1fr; }
-      nav { padding: 0 16px; }
-      .nav-links { display: none; }
+      .top-bar { display: none; }
+      .masthead-inner { padding: 12px 0; }
+      .masthead { padding: 0 16px; }
+      .hero { grid-template-columns: 1fr; padding: 0 16px; }
+      .hero-divider { display: none; }
+      .hero-sidebar { flex-direction: row; overflow-x: auto; gap: 16px; margin-top: 24px; }
+      .sidebar-story { min-width: 220px; border-bottom: none; padding-bottom: 0; margin-bottom: 0; border-right: 1px solid var(--border); padding-right: 16px; }
+      .cards-grid { grid-template-columns: 1fr; padding: 0 16px; }
+      .card { border-right: none; border-bottom: 1px solid var(--border); padding: 0 0 20px !important; margin-bottom: 20px; }
+      .biz-strip { grid-template-columns: 1fr; padding: 0 16px; }
+      .biz-main { border-right: none; padding-right: 0; border-bottom: 1px solid var(--border); padding-bottom: 20px; }
+      .section-header { padding: 0 16px; }
+      .sources-section { padding: 12px 16px; }
+      .nav-inner { padding: 0 16px; }
+      .footer-inner { grid-template-columns: 1fr; gap: 24px; }
+      .footer { padding: 24px 16px; }
+      .footer-bottom { flex-direction: column; gap: 8px; padding: 0 0; }
+      .search-box { display: none; }
     }
   </style>
 </head>
 <body>
 
-<!-- TICKER -->
-<div class="ticker">
-  <div class="ticker-inner">
-    <span class="ticker-item">⚡ Markets rise as Fed signals pause on rate hikes</span>
-    <span class="ticker-sep">|</span>
-    <span class="ticker-item">🌍 G7 leaders meet in Rome to discuss AI governance frameworks</span>
-    <span class="ticker-sep">|</span>
-    <span class="ticker-item">🚀 SpaceX successfully deploys 60-satellite Starlink batch</span>
-    <span class="ticker-sep">|</span>
-    <span class="ticker-item">💊 New Alzheimer's drug shows 35% slowdown in clinical trials</span>
-    <span class="ticker-sep">|</span>
-    <span class="ticker-item">⚽ Champions League semi-finals: Madrid vs. Arsenal tonight</span>
-    <span class="ticker-sep">|</span>
-    <!-- duplicate for seamless loop -->
-    <span class="ticker-item">⚡ Markets rise as Fed signals pause on rate hikes</span>
-    <span class="ticker-sep">|</span>
-    <span class="ticker-item">🌍 G7 leaders meet in Rome to discuss AI governance frameworks</span>
-    <span class="ticker-sep">|</span>
-    <span class="ticker-item">🚀 SpaceX successfully deploys 60-satellite Starlink batch</span>
-    <span class="ticker-sep">|</span>
-    <span class="ticker-item">💊 New Alzheimer's drug shows 35% slowdown in clinical trials</span>
-    <span class="ticker-sep">|</span>
-    <span class="ticker-item">⚽ Champions League semi-finals: Madrid vs. Arsenal tonight</span>
-    <span class="ticker-sep">|</span>
+<!-- TOP BAR -->
+<div class="top-bar">
+  <div class="top-bar-left">
+    <span>Monday, 12 May 2026</span>
+    <span class="top-sep">|</span>
+    <span>Singapore 🇸🇬 · 31°C</span>
+    <span class="top-sep">|</span>
+    <span>SGD/USD: 0.756</span>
+    <span class="top-sep">|</span>
+    <span>STI: 3,842.10 ▲ 0.4%</span>
+  </div>
+  <div class="top-bar-right">
+    <a href="#">中文</a>
+    <span class="top-sep">|</span>
+    <a href="#">Newsletter</a>
+    <span class="top-sep">|</span>
+    <a href="#">About</a>
+  </div>
+</div>
+
+<!-- MASTHEAD -->
+<div class="masthead">
+  <div class="masthead-inner">
+    <div class="logo">
+      <div class="logo-dot">RD</div>
+      <div>
+        <div class="logo-text">Red<span>Dot</span></div>
+        <div class="logo-tagline">Singapore's News Digest</div>
+      </div>
+    </div>
+    <div class="masthead-right">
+      <div class="search-box">
+        <span class="search-icon">⌕</span>
+        <input type="text" placeholder="Search news…" />
+      </div>
+    </div>
   </div>
 </div>
 
 <!-- NAV -->
 <nav>
-  <div class="logo">News<span>Forge</span></div>
-  <ul class="nav-links">
-    <li><a href="#" class="active">Top Stories</a></li>
-    <li><a href="#">World</a></li>
-    <li><a href="#">Tech</a></li>
-    <li><a href="#">Business</a></li>
-    <li><a href="#">Science</a></li>
-    <li><a href="#">Sports</a></li>
-  </ul>
-  <div class="nav-right">
-    <div class="search-box">
-      <span class="search-icon">⌕</span>
-      <input type="text" placeholder="Search articles…" />
-    </div>
+  <div class="nav-inner">
+    <div class="nav-item active">Top Stories</div>
+    <div class="nav-item">Singapore</div>
+    <div class="nav-item">Asia</div>
+    <div class="nav-item">World</div>
+    <div class="nav-item">Business</div>
+    <div class="nav-item">Tech</div>
+    <div class="nav-item">Politics</div>
+    <div class="nav-item">Health</div>
+    <div class="nav-item">Sport</div>
+    <div class="nav-item">CNA Live</div>
   </div>
 </nav>
+
+<!-- TICKER -->
+<div class="ticker">
+  <span class="ticker-label">Breaking</span>
+  <span class="ticker-inner">
+    <span class="ticker-item">MAS holds interest rates steady as inflation eases to 1.8%</span>
+    <span class="ticker-sep"> · </span>
+    <span class="ticker-item">Budget 2026: GST Vouchers increased to $850 for eligible households</span>
+    <span class="ticker-sep"> · </span>
+    <span class="ticker-item">Changi Airport Terminal 5 construction on track for 2030 opening</span>
+    <span class="ticker-sep"> · </span>
+    <span class="ticker-item">SIA reports record quarterly profit; expands SE Asia routes</span>
+    <span class="ticker-sep"> · </span>
+    <span class="ticker-item">NDP 2026 theme announced: "Together, We Rise"</span>
+    <span class="ticker-sep"> · </span>
+    <!-- duplicate -->
+    <span class="ticker-item">MAS holds interest rates steady as inflation eases to 1.8%</span>
+    <span class="ticker-sep"> · </span>
+    <span class="ticker-item">Budget 2026: GST Vouchers increased to $850 for eligible households</span>
+    <span class="ticker-sep"> · </span>
+    <span class="ticker-item">Changi Airport Terminal 5 construction on track for 2030 opening</span>
+    <span class="ticker-sep"> · </span>
+    <span class="ticker-item">SIA reports record quarterly profit; expands SE Asia routes</span>
+    <span class="ticker-sep"> · </span>
+    <span class="ticker-item">NDP 2026 theme announced: "Together, We Rise"</span>
+    <span class="ticker-sep"> · </span>
+  </span>
+</div>
 
 <!-- HERO -->
 <div class="hero">
   <div class="hero-main">
-    <div class="hero-img-placeholder">🌐</div>
-    <div class="hero-overlay">
-      <div class="ai-badge">⚡ AI Summary</div>
-      <h1>Global Leaders Reach Landmark Agreement on AI Safety Standards at Emergency Summit</h1>
-      <div class="hero-meta">
-        <div class="source-chip"><span class="source-dot"></span> Reuters · BBC · AP</div>
-        <span>3 sources · 2 hours ago</span>
-      </div>
+    <div class="hero-img-block">
+      <div class="hero-img-placeholder">🏛️</div>
+      <div class="hero-img-caption">Parliament House, Singapore — Photo: MCI</div>
+    </div>
+    <div class="ai-tag"><span class="ai-dot"></span> AI Digest · 4 sources</div>
+    <div class="category-tag">Singapore · Politics</div>
+    <h1 class="hero-main-title">Singapore Parliament Passes Landmark Digital Infrastructure Bill, Setting New Standards for Data Sovereignty</h1>
+    <p class="hero-summary">The Digital Infrastructure Resilience Bill, passed with broad cross-party support, mandates that critical government data be stored and processed within Singapore's borders. Analysts say the legislation positions the city-state as a regional benchmark for data governance amid rising geopolitical tensions over cloud infrastructure.</p>
+    <div class="article-meta">
+      <span class="source-name">Channel NewsAsia</span>
+      <span class="meta-sep">·</span>
+      <span>2 hours ago</span>
+      <span class="meta-sep">·</span>
+      <span>8 min read</span>
+    </div>
+    <div class="source-badges">
+      <span class="source-badge">CNA</span>
+      <span class="source-badge">Straits Times</span>
+      <span class="source-badge">Today</span>
+      <span class="source-badge">Reuters</span>
     </div>
   </div>
 
+  <div class="hero-divider"></div>
+
   <div class="hero-sidebar">
-    <div class="sidebar-card">
-      <div class="sidebar-thumb thumb-1">📈</div>
-      <div class="sidebar-content">
-        <h3>Fed holds rates steady; analysts expect cuts by Q3 2026</h3>
-        <div class="sidebar-meta">
-          <span class="ai-indicator"><span class="ai-dot"></span> AI</span>
-          &nbsp;· Bloomberg · 1h ago
-        </div>
-      </div>
+    <div class="sidebar-story">
+      <div class="sidebar-thumb st-1">📈</div>
+      <div class="category-tag">Business</div>
+      <div class="sidebar-title">DBS and OCBC post record earnings as regional lending demand surges</div>
+      <div class="sidebar-meta">Straits Times · Business Times · 1h ago</div>
     </div>
-
-    <div class="sidebar-card">
-      <div class="sidebar-thumb thumb-2">🔥</div>
-      <div class="sidebar-content">
-        <h3>Wildfire season arrives early across western US states</h3>
-        <div class="sidebar-meta">
-          <span class="ai-indicator"><span class="ai-dot"></span> AI</span>
-          &nbsp;· Reuters · 4h ago
-        </div>
-      </div>
+    <div class="sidebar-story">
+      <div class="sidebar-thumb st-2">✈️</div>
+      <div class="category-tag">Singapore</div>
+      <div class="sidebar-title">Changi Airport handled 70 million passengers in 2025, reclaiming world's best title</div>
+      <div class="sidebar-meta">CNA · Mothership · 3h ago</div>
     </div>
-
-    <div class="sidebar-card">
-      <div class="sidebar-thumb thumb-3">🤖</div>
-      <div class="sidebar-content">
-        <h3>OpenAI releases GPT-5 with multimodal reasoning capabilities</h3>
-        <div class="sidebar-meta">
-          <span class="ai-indicator"><span class="ai-dot"></span> AI</span>
-          &nbsp;· The Verge · 6h ago
-        </div>
-      </div>
+    <div class="sidebar-story">
+      <div class="sidebar-thumb st-3">🏥</div>
+      <div class="category-tag">Health</div>
+      <div class="sidebar-title">MOH expands Healthier SG programme to cover all residents under 40</div>
+      <div class="sidebar-meta">Today Online · CNA · 5h ago</div>
     </div>
   </div>
 </div>
 
 <!-- SOURCES BAR -->
-<div class="sources-bar">
-  <div class="sources-label">Sources</div>
-  <div class="sources-list">
-    <div class="source-pill active"><span class="source-dot"></span> All</div>
-    <div class="source-pill"><span class="source-dot"></span> Reuters</div>
-    <div class="source-pill"><span class="source-dot"></span> BBC</div>
-    <div class="source-pill"><span class="source-dot"></span> AP News</div>
-    <div class="source-pill"><span class="source-dot"></span> The Guardian</div>
-    <div class="source-pill"><span class="source-dot"></span> Bloomberg</div>
-    <div class="source-pill"><span class="source-dot"></span> The Verge</div>
-    <div class="source-pill"><span class="source-dot"></span> Ars Technica</div>
-    <div class="source-pill"><span class="source-dot"></span> Al Jazeera</div>
+<div class="sources-section">
+  <div class="sources-inner">
+    <div class="sources-label">Filter by source:</div>
+    <div class="source-pill active"><span class="s-dot"></span> All Sources</div>
+    <div class="source-pill"><span class="s-dot"></span> CNA</div>
+    <div class="source-pill"><span class="s-dot"></span> Straits Times</div>
+    <div class="source-pill"><span class="s-dot"></span> Today Online</div>
+    <div class="source-pill"><span class="s-dot"></span> Mothership</div>
+    <div class="source-pill"><span class="s-dot"></span> Business Times</div>
+    <div class="source-pill"><span class="s-dot"></span> Zaobao</div>
+    <div class="source-pill"><span class="s-dot"></span> Reuters</div>
+    <div class="source-pill"><span class="s-dot"></span> BBC</div>
+    <div class="source-pill"><span class="s-dot"></span> SCMP</div>
   </div>
 </div>
 
-<!-- LATEST ARTICLES -->
-<div class="section">
-  <div class="section-header">
-    <div class="section-title">Latest Stories</div>
-    <a href="#" class="see-all">See all →</a>
+<!-- LATEST STORIES -->
+<hr class="section-rule" />
+<div class="section-header">
+  <div class="section-title-text"><span class="red-bar"></span> Latest Stories</div>
+  <a href="#" class="see-all">See all stories →</a>
+</div>
+
+<div class="cards-grid">
+  <div class="card">
+    <div class="card-thumb ct-1">🧬</div>
+    <div class="card-cat">Health · Singapore</div>
+    <div class="card-title">NUH and NTU develop AI tool that detects colorectal cancer with 94% accuracy</div>
+    <div class="card-summary">Researchers from the National University Hospital and NTU have created a machine-learning model trained on 15 years of local patient data, outperforming existing screening methods in early-stage detection.</div>
+    <div class="card-meta">
+      <span>CNA · 45m ago</span>
+      <span class="card-ai"><span class="ai-dot"></span> AI Written</span>
+    </div>
   </div>
 
-  <div class="cards-grid">
-    <div class="card">
-      <div class="card-thumb ct-1">🧬</div>
-      <div class="card-body">
-        <span class="tag">Science</span>
-        <h3>CRISPR gene therapy reverses inherited blindness in landmark trial</h3>
-        <p>Researchers at Johns Hopkins report full restoration of light sensitivity in 8 of 12 patients, marking a breakthrough in ocular gene therapy.</p>
-        <div class="card-footer">
-          <span>Nature · 30m ago</span>
-          <span class="ai-indicator"><span class="ai-dot"></span> AI Written</span>
-        </div>
-      </div>
+  <div class="card">
+    <div class="card-thumb ct-2">🏗️</div>
+    <div class="card-cat">Singapore · Property</div>
+    <div class="card-title">HDB launches 6,000 BTO flats in Tengah and Bayshore in May exercise</div>
+    <div class="card-summary">The latest Build-To-Order launch includes prime location flats in the upcoming Tengah eco-town and waterfront units at the new Bayshore precinct, with balloting opening next week.</div>
+    <div class="card-meta">
+      <span>Straits Times · 1h ago</span>
+      <span class="card-ai"><span class="ai-dot"></span> AI Written</span>
     </div>
+  </div>
 
-    <div class="card">
-      <div class="card-thumb ct-2">💰</div>
-      <div class="card-body">
-        <span class="tag red">Business</span>
-        <h3>Apple reports record $98B quarter driven by Vision Pro enterprise sales</h3>
-        <p>Services and spatial computing segments outpaced iPhone for the first time as corporations adopt mixed-reality workflows.</p>
-        <div class="card-footer">
-          <span>Bloomberg · 1h ago</span>
-          <span class="ai-indicator"><span class="ai-dot"></span> AI Written</span>
-        </div>
-      </div>
-    </div>
-
-    <div class="card">
-      <div class="card-thumb ct-3">🛰️</div>
-      <div class="card-body">
-        <span class="tag blue">Tech</span>
-        <h3>NASA's Artemis IV crew selected: first international moon mission</h3>
-        <p>The four-person crew includes astronauts from the US, ESA, JAXA, and CSA, targeting a 2027 lunar surface landing.</p>
-        <div class="card-footer">
-          <span>AP News · 2h ago</span>
-          <span class="ai-indicator"><span class="ai-dot"></span> AI Written</span>
-        </div>
-      </div>
-    </div>
-
-    <div class="card">
-      <div class="card-thumb ct-4">⚡</div>
-      <div class="card-body">
-        <span class="tag yellow">Energy</span>
-        <h3>China surpasses 2TW solar capacity milestone, doubling 2023 output</h3>
-        <p>The rapid expansion puts China on track to meet its 2030 carbon neutrality goals five years ahead of schedule.</p>
-        <div class="card-footer">
-          <span>Reuters · 3h ago</span>
-          <span class="ai-indicator"><span class="ai-dot"></span> AI Written</span>
-        </div>
-      </div>
-    </div>
-
-    <div class="card">
-      <div class="card-thumb ct-5">🏛️</div>
-      <div class="card-body">
-        <span class="tag">World</span>
-        <h3>EU passes Digital Markets Act enforcement wave, fining three tech giants</h3>
-        <p>Meta, Google, and Apple face combined penalties exceeding €4.2B for non-compliance with interoperability mandates.</p>
-        <div class="card-footer">
-          <span>The Guardian · 5h ago</span>
-          <span class="ai-indicator"><span class="ai-dot"></span> AI Written</span>
-        </div>
-      </div>
-    </div>
-
-    <div class="card">
-      <div class="card-thumb ct-6">🧠</div>
-      <div class="card-body">
-        <span class="tag purple">AI</span>
-        <h3>DeepMind's AlphaFold 4 predicts full cell proteome interactions</h3>
-        <p>The model can now map protein-protein interactions at cellular scale, opening new avenues in drug discovery.</p>
-        <div class="card-footer">
-          <span>Ars Technica · 7h ago</span>
-          <span class="ai-indicator"><span class="ai-dot"></span> AI Written</span>
-        </div>
-      </div>
+  <div class="card">
+    <div class="card-thumb ct-3">🌏</div>
+    <div class="card-cat">Asia · Geopolitics</div>
+    <div class="card-title">ASEAN leaders agree on South China Sea code of conduct framework in Kuala Lumpur</div>
+    <div class="card-summary">A non-binding framework on conduct in contested waters was endorsed at the ASEAN Foreign Ministers' meeting, marking the first substantive agreement in over a decade of stalled negotiations.</div>
+    <div class="card-meta">
+      <span>Reuters · 2h ago</span>
+      <span class="card-ai"><span class="ai-dot"></span> AI Written</span>
     </div>
   </div>
 </div>
 
+<!-- BUSINESS SECTION -->
+<hr class="section-rule" />
+<div class="section-header">
+  <div class="section-title-text"><span class="red-bar"></span> Business & Markets</div>
+  <a href="#" class="see-all">See all →</a>
+</div>
+
+<div class="biz-strip">
+  <div class="biz-main">
+    <div class="biz-main-img">💹</div>
+    <div class="category-tag">Markets</div>
+    <div class="biz-main-title">STI closes at 3-year high as foreign institutional investors pour $2.4B into Singapore equities</div>
+    <div class="article-meta" style="margin-top:0">
+      <span class="source-name">Business Times</span>
+      <span class="meta-sep">·</span>
+      <span>3h ago</span>
+      <span class="meta-sep">·</span>
+      <span class="card-ai" style="margin-left:4px"><span class="ai-dot"></span> AI Written</span>
+    </div>
+  </div>
+
+  <div class="biz-side">
+    <div class="biz-item">
+      <div class="card-cat">Startups</div>
+      <div class="biz-item-title">Grab acquires Indonesian fintech startup Oy! for $340M, expanding regional payments</div>
+      <div class="biz-item-meta">SCMP · 4h ago</div>
+    </div>
+    <div class="biz-item">
+      <div class="card-cat">Energy</div>
+      <div class="biz-item-title">Sembcorp wins contract to build Southeast Asia's largest green hydrogen plant</div>
+      <div class="biz-item-meta">Business Times · 5h ago</div>
+    </div>
+  </div>
+
+  <div class="biz-side">
+    <div class="biz-item">
+      <div class="card-cat">Retail</div>
+      <div class="biz-item-title">Sheng Siong expands into Malaysia with first JB outlet, eyes 5 more by 2027</div>
+      <div class="biz-item-meta">Today Online · 6h ago</div>
+    </div>
+    <div class="biz-item">
+      <div class="card-cat">Aviation</div>
+      <div class="biz-item-title">SIA's new premium economy cabin on A350s wins "Best in Class" at Skytrax 2026</div>
+      <div class="biz-item-meta">Mothership · 7h ago</div>
+    </div>
+  </div>
+</div>
+
+<!-- FOOTER -->
 <footer>
-  NewsForge — AI-powered news aggregation · Sources: Reuters, BBC, AP, Bloomberg, The Guardian, The Verge, Ars Technica, Al Jazeera · Articles summarised by Claude AI
+  <div class="footer-inner">
+    <div>
+      <div class="footer-logo">Red<span>Dot</span></div>
+      <div class="footer-tagline">Singapore's AI-powered news digest. Aggregating and summarising the best of local and regional journalism — so you never miss what matters.</div>
+    </div>
+    <div>
+      <div class="footer-sources-label">News Sources</div>
+      <div class="footer-sources">
+        <span class="footer-source">Channel NewsAsia</span>
+        <span class="footer-source">The Straits Times</span>
+        <span class="footer-source">Today Online</span>
+        <span class="footer-source">Mothership.sg</span>
+        <span class="footer-source">The Business Times</span>
+        <span class="footer-source">Lianhe Zaobao</span>
+        <span class="footer-source">Reuters Asia</span>
+        <span class="footer-source">BBC Asia</span>
+        <span class="footer-source">South China Morning Post</span>
+      </div>
+    </div>
+  </div>
+  <div class="footer-bottom">
+    <span>© 2026 RedDot News · Articles AI-summarised by Claude · Original content belongs to respective publishers</span>
+    <span>Privacy · Terms · Contact</span>
+  </div>
 </footer>
 
 </body>
