@@ -27,7 +27,6 @@ body{
 #bg.wait  {background:linear-gradient(135deg,var(--wait-1),var(--wait-2))}
 #bg.delay {background:linear-gradient(135deg,var(--delay-1),var(--delay-2))}
 
-/* ── Pulse rings ── */
 .ring{
   position:absolute;width:320px;height:320px;border-radius:50%;
   border:1.5px solid rgba(255,255,255,.3);opacity:0;display:none;
@@ -39,7 +38,6 @@ body{
   100%{transform:scale(1.55);opacity:0}
 }
 
-/* ── Main content ── */
 #content{
   display:flex;flex-direction:column;align-items:center;gap:26px;
   padding:0 28px;text-align:center;z-index:1;flex:1;justify-content:center;
@@ -63,20 +61,22 @@ body{
 .dot{width:7px;height:7px;border-radius:50%}
 .dot.hi{background:#7AE28C} .dot.lo{background:#FFD166}
 
-/* ── Spinner ── */
 .spin{
   width:42px;height:42px;border:3px solid rgba(255,255,255,.22);
   border-top-color:#fff;border-radius:50%;animation:rot .75s linear infinite;
 }
 @keyframes rot{to{transform:rotate(360deg)}}
 
-/* ── Footer ── */
 #footer{
   width:100%;padding:0 32px 46px;
   display:flex;flex-direction:column;align-items:center;gap:9px;z-index:1;
 }
 #age{font-size:11.5px;opacity:.38;letter-spacing:.2px}
-#loc{font-size:11px;opacity:.28;font-variant-numeric:tabular-nums}
+#loc{
+  font-size:12px;opacity:.45;
+  display:flex;align-items:center;gap:5px;
+}
+#loc svg{opacity:.7;flex-shrink:0}
 #btn{
   width:100%;max-width:360px;padding:17px;
   background:rgba(255,255,255,.18);backdrop-filter:blur(12px);
@@ -88,7 +88,6 @@ body{
 #btn:disabled{opacity:.35;cursor:default}
 #btn:not(:disabled):hover{background:rgba(255,255,255,.25)}
 
-/* ── Badges ── */
 .badge{
   position:fixed;top:14px;
   background:rgba(0,0,0,.28);border:1px solid rgba(255,255,255,.12);
@@ -99,7 +98,6 @@ body{
 #dbg-btn{right:14px;cursor:pointer;color:rgba(255,255,255,.38)}
 #dbg-btn:hover{color:rgba(255,255,255,.7)}
 
-/* ── Debug panel ── */
 #debug{
   position:fixed;bottom:0;left:0;right:0;
   background:rgba(0,0,0,.88);backdrop-filter:blur(10px);
@@ -118,7 +116,7 @@ body{
   <div class="ring lag" id="r2"></div>
   <div id="content">
     <div class="spin"></div>
-    <div class="sub">Checking NEA rain radar…</div>
+    <div class="sub">Getting your location…</div>
   </div>
   <div id="footer">
     <div id="age"></div>
@@ -134,19 +132,60 @@ body{
 <script>
 'use strict';
 
-// ─── CONFIG — change these coordinates to test any Singapore location ──────
-const LAT = 1.2657294;
-const LNG = 103.8227098;
+// ─── FALLBACK — used if location permission is denied ──────────────────────
+const DEFAULT_LAT = 1.2657294;
+const DEFAULT_LNG = 103.8227098;
 
 // ─── CONSTANTS ─────────────────────────────────────────────────────────────
-const NEA_URL       = 'https://api.data.gov.sg/v1/environment/rainfall';
-const MAX_MM        = 5;        // 5 mm/5min = intensity 255
-const I_THRESH      = 60;       // filter threshold
-const EPS_KM        = 5;        // DBSCAN neighbourhood radius
-const MIN_PTS       = 2;        // DBSCAN minimum cluster size
-const DEF_SPEED     = 20;       // km/h assumed when no velocity data
-const DELAY_THRESH  = 10;       // minutes
-const WAIT_THRESH   = 25;       // minutes
+const NEA_URL      = 'https://api.data.gov.sg/v1/environment/rainfall';
+const GEOCODE_URL  = 'https://nominatim.openstreetmap.org/reverse';
+const MAX_MM       = 5;
+const I_THRESH     = 60;
+const EPS_KM       = 5;
+const MIN_PTS      = 2;
+const DEF_SPEED    = 20;
+const DELAY_THRESH = 10;
+const WAIT_THRESH  = 25;
+
+// ─── MUTABLE STATE ─────────────────────────────────────────────────────────
+let userLat      = DEFAULT_LAT;
+let userLng      = DEFAULT_LNG;
+let locationLabel = 'Singapore';
+
+// ─── GEOLOCATION ───────────────────────────────────────────────────────────
+function getLocation() {
+  return new Promise(resolve => {
+    if (!navigator.geolocation) {
+      resolve({ lat: DEFAULT_LAT, lng: DEFAULT_LNG, fallback: true });
+      return;
+    }
+    navigator.geolocation.getCurrentPosition(
+      pos => resolve({ lat: pos.coords.latitude, lng: pos.coords.longitude, fallback: false }),
+      ()  => resolve({ lat: DEFAULT_LAT, lng: DEFAULT_LNG, fallback: true }),
+      { timeout: 8000, maximumAge: 60000, enableHighAccuracy: false }
+    );
+  });
+}
+
+// ─── REVERSE GEOCODING (OpenStreetMap Nominatim — free, no key) ────────────
+async function reverseGeocode(lat, lng) {
+  try {
+    const url = `${GEOCODE_URL}?lat=${lat}&lon=${lng}&format=json&zoom=16&addressdetails=1`;
+    const res = await fetch(url, {
+      headers: { 'User-Agent': 'RainGo/1.0 rain-decision-app' },
+      signal: AbortSignal.timeout(5000),
+    });
+    const j = await res.json();
+    const a = j.address ?? {};
+    // Build a short, readable label: road + neighbourhood/suburb
+    const road  = a.road || a.pedestrian || a.footway || '';
+    const area  = a.suburb || a.neighbourhood || a.quarter || a.city_district || '';
+    const parts = [road, area].filter(Boolean);
+    return parts.length ? parts.join(', ') : (a.city ?? 'Singapore');
+  } catch {
+    return 'Singapore';
+  }
+}
 
 // ─── HAVERSINE ─────────────────────────────────────────────────────────────
 function hav(a1,o1,a2,o2){
@@ -189,15 +228,14 @@ function cluster(cells){
 function decide(lat,lng,clusters){
   if(!clusters.length)
     return{state:'GO',minutes:999,confidence:90,message:'No rain nearby. Safe to go!'};
-
-  let minT=Infinity,best=null,weak=true;
+  let minT=Infinity,weak=true;
   for(const c of clusters){
     const d=hav(lat,lng,c.centroid.lat,c.centroid.lng);
     if(d<=c.radiusKm)
       return{state:'DELAY',minutes:0,confidence:80,message:"You're in the rain right now. Wait it out!"};
     if(c.avgI>80)weak=false;
     const t=((d-c.radiusKm)/DEF_SPEED)*60;
-    if(t<minT){minT=t;best=c;}
+    if(t<minT)minT=t;
   }
   if(minT===Infinity)
     return{state:'GO',minutes:999,confidence:80,message:'Rain moving away. Safe to go!'};
@@ -207,14 +245,14 @@ function decide(lat,lng,clusters){
   return{state:'GO',minutes:m,confidence:conf,message:`Rain is ${m} min away. Safe to go!`};
 }
 
-// ─── FETCH — live NEA → mock fallback ──────────────────────────────────────
+// ─── FETCH NEA — live → mock fallback ──────────────────────────────────────
 async function fetchData(){
   try{
     const res=await fetch(NEA_URL,{signal:AbortSignal.timeout(8000)});
     if(!res.ok)throw 0;
     const j=await res.json();
     if(!j?.metadata?.stations)throw 0;
-    const {metadata:{stations},items}=j;
+    const{metadata:{stations},items}=j;
     const ts=items[0]?.timestamp??new Date().toISOString();
     const map={};
     for(const s of stations)map[s.id]={lat:s.location.latitude,lng:s.location.longitude,intensity:0};
@@ -226,40 +264,36 @@ async function fetchData(){
   }
 }
 
-// ─── MOCK DATA — storm ~18 km north, WAIT ~20 min scenario ─────────────────
+// ─── MOCK — storm ~18 km north, WAIT ~20 min ───────────────────────────────
 function mockCells(){
   return[
-    // User's area (south) — dry
-    {lat:1.265,lng:103.823,intensity:0}, // Harbourfront / Telok Blangah ← USER
-    {lat:1.271,lng:103.796,intensity:0}, // Pasir Panjang
-    {lat:1.279,lng:103.851,intensity:0}, // Marina Bay
-    {lat:1.249,lng:103.830,intensity:0}, // Sentosa
-    {lat:1.294,lng:103.786,intensity:0}, // Queenstown
-    {lat:1.312,lng:103.765,intensity:0}, // West Coast
-    {lat:1.281,lng:103.800,intensity:0}, // Labrador
-    // Light drizzle mid-island
-    {lat:1.335,lng:103.780,intensity:28}, // Clementi
-    {lat:1.320,lng:103.810,intensity:18}, // Buona Vista
-    {lat:1.353,lng:103.835,intensity:42}, // Bishan
-    {lat:1.345,lng:103.850,intensity:31}, // Toa Payoh
-    // Active storm cluster north (~18 km away, approaching)
-    {lat:1.415,lng:103.830,intensity:190}, // Yishun
-    {lat:1.405,lng:103.815,intensity:215}, // Sembawang
-    {lat:1.398,lng:103.842,intensity:195}, // Yishun East
-    {lat:1.423,lng:103.836,intensity:175}, // Canberra
-    {lat:1.410,lng:103.800,intensity:145}, // Sembawang West
-    {lat:1.438,lng:103.789,intensity:88},  // Woodlands
-    {lat:1.427,lng:103.770,intensity:82},  // Kranji
-    // Dry east
-    {lat:1.350,lng:103.957,intensity:0},  // Tampines
-    {lat:1.364,lng:103.992,intensity:0},  // Changi
-    {lat:1.380,lng:103.920,intensity:0},  // Punggol
-    {lat:1.369,lng:103.845,intensity:5},  // Ang Mo Kio
-    {lat:1.349,lng:103.937,intensity:0},  // Pasir Ris
+    {lat:1.265,lng:103.823,intensity:0},
+    {lat:1.271,lng:103.796,intensity:0},
+    {lat:1.279,lng:103.851,intensity:0},
+    {lat:1.249,lng:103.830,intensity:0},
+    {lat:1.294,lng:103.786,intensity:0},
+    {lat:1.312,lng:103.765,intensity:0},
+    {lat:1.281,lng:103.800,intensity:0},
+    {lat:1.335,lng:103.780,intensity:28},
+    {lat:1.320,lng:103.810,intensity:18},
+    {lat:1.353,lng:103.835,intensity:42},
+    {lat:1.345,lng:103.850,intensity:31},
+    {lat:1.415,lng:103.830,intensity:190},
+    {lat:1.405,lng:103.815,intensity:215},
+    {lat:1.398,lng:103.842,intensity:195},
+    {lat:1.423,lng:103.836,intensity:175},
+    {lat:1.410,lng:103.800,intensity:145},
+    {lat:1.438,lng:103.789,intensity:88},
+    {lat:1.427,lng:103.770,intensity:82},
+    {lat:1.350,lng:103.957,intensity:0},
+    {lat:1.364,lng:103.992,intensity:0},
+    {lat:1.380,lng:103.920,intensity:0},
+    {lat:1.369,lng:103.845,intensity:5},
+    {lat:1.349,lng:103.937,intensity:0},
   ];
 }
 
-// ─── UI HELPERS ────────────────────────────────────────────────────────────
+// ─── RENDER ────────────────────────────────────────────────────────────────
 const ICONS={GO:'☀️',WAIT:'🌦️',DELAY:'⛈️'};
 function hl(d){
   if(d.state==='GO')   return'Safe to go now';
@@ -268,39 +302,42 @@ function hl(d){
   return'—';
 }
 
-// ─── RENDER ────────────────────────────────────────────────────────────────
+// Pin icon SVG
+const PIN=`<svg width="10" height="13" viewBox="0 0 10 13" fill="none" xmlns="http://www.w3.org/2000/svg">
+  <path d="M5 0C2.24 0 0 2.24 0 5c0 3.75 5 8 5 8s5-4.25 5-8c0-2.76-2.24-5-5-5zm0 6.5A1.5 1.5 0 1 1 5 3.5a1.5 1.5 0 0 1 0 3z" fill="currentColor"/>
+</svg>`;
+
 let timer=null;
-function render({loading,decision,clusters=[],source,timestamp}){
-  const bg=document.getElementById('bg');
-  const con=document.getElementById('content');
-  const r1=document.getElementById('r1');
-  const r2=document.getElementById('r2');
-  const age=document.getElementById('age');
-  const loc=document.getElementById('loc');
-  const btn=document.getElementById('btn');
-  const sb=document.getElementById('src-badge');
+function renderLoading(msg='Checking rain radar…'){
+  document.getElementById('bg').className='';
+  document.getElementById('r1').className='ring';
+  document.getElementById('r2').className='ring lag';
+  document.getElementById('content').innerHTML=`<div class="spin"></div><div class="sub">${msg}</div>`;
+  document.getElementById('btn').disabled=true;
+  document.getElementById('age').textContent='';
+}
 
-  bg.className=loading?'':(decision?.state?.toLowerCase()??'');
-  const rings=!loading&&decision?.state!=='GO';
-  r1.className='ring'+(rings?' on':'');
-  r2.className='ring lag'+(rings?' on':'');
+function render({decision,clusters=[],source,timestamp}){
+  const bg  = document.getElementById('bg');
+  const con = document.getElementById('content');
+  const r1  = document.getElementById('r1');
+  const r2  = document.getElementById('r2');
+  const age = document.getElementById('age');
+  const loc = document.getElementById('loc');
+  const btn = document.getElementById('btn');
+  const sb  = document.getElementById('src-badge');
 
-  sb.textContent=source==='live'?'NEA LIVE':'NEA DEMO';
-  sb.style.color=source==='live'?'rgba(122,226,140,.75)':'rgba(255,209,102,.65)';
+  bg.className = decision.state.toLowerCase();
+  const rings  = decision.state !== 'GO';
+  r1.className = 'ring' + (rings ? ' on' : '');
+  r2.className = 'ring lag' + (rings ? ' on' : '');
 
-  loc.textContent=`${LAT.toFixed(4)}° N, ${LNG.toFixed(4)}° E  ·  Singapore`;
+  sb.textContent = source === 'live' ? 'NEA LIVE' : 'NEA DEMO';
+  sb.style.color = source === 'live' ? 'rgba(122,226,140,.75)' : 'rgba(255,209,102,.65)';
 
-  if(loading){
-    con.innerHTML=`<div class="spin"></div><div class="sub">Checking NEA rain radar…</div>`;
-    btn.disabled=true; age.textContent='';
-    return;
-  }
-  if(!decision)return;
+  loc.innerHTML = `${PIN} ${locationLabel}`;
 
-  const isWait=decision.state==='WAIT'&&decision.minutes>0&&decision.minutes<999;
-  const isDelay=decision.state==='DELAY'&&decision.minutes>0;
-  const showNum=isWait||isDelay;
-
+  const showNum = (decision.state==='WAIT'||decision.state==='DELAY') && decision.minutes>0 && decision.minutes<999;
   con.innerHTML=`
     <div class="icon">${ICONS[decision.state]??'🌫️'}</div>
     ${showNum?`<div class="big-num">${decision.minutes}</div><div class="big-unit">minutes</div>`:''}
@@ -316,7 +353,7 @@ function render({loading,decision,clusters=[],source,timestamp}){
   btn.disabled=false;
 
   document.getElementById('dbg-pre').textContent=JSON.stringify({
-    checked:{lat:LAT,lng:LNG},
+    location:{lat:+userLat.toFixed(5),lng:+userLng.toFixed(5),label:locationLabel},
     source,timestamp,
     activeClusters:clusters.length,
     clusters:clusters.map(c=>({
@@ -332,18 +369,34 @@ function render({loading,decision,clusters=[],source,timestamp}){
 // ─── REFRESH ───────────────────────────────────────────────────────────────
 async function refresh(){
   clearTimeout(timer);
-  render({loading:true});
-  const {cells,source,timestamp}=await fetchData();
-  const clusters=cluster(cells);
-  const decision=decide(LAT,LNG,clusters);
-  render({loading:false,decision,clusters,source,timestamp});
-  timer=setTimeout(refresh,5*60*1000); // auto-refresh every 5 min
+
+  // Step 1 — get device location
+  renderLoading('Getting your location…');
+  const pos = await getLocation();
+  userLat = pos.lat;
+  userLng = pos.lng;
+
+  // Step 2 — geocode + radar in parallel
+  renderLoading('Checking rain radar…');
+  const [label, radarData] = await Promise.all([
+    reverseGeocode(userLat, userLng),
+    fetchData(),
+  ]);
+  locationLabel = pos.fallback ? `Singapore (location unavailable)` : label;
+
+  // Step 3 — cluster + decide
+  const clusters = cluster(radarData.cells);
+  const decision = decide(userLat, userLng, clusters);
+
+  render({ decision, clusters, source: radarData.source, timestamp: radarData.timestamp });
+
+  timer = setTimeout(refresh, 5 * 60 * 1000);
 }
 
-document.getElementById('dbg-btn').addEventListener('click',()=>{
+document.getElementById('dbg-btn').addEventListener('click', () => {
   document.getElementById('debug').classList.toggle('open');
 });
-document.getElementById('btn').addEventListener('click',refresh);
+document.getElementById('btn').addEventListener('click', refresh);
 refresh();
 </script>
 </body>
