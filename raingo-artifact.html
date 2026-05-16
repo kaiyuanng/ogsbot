@@ -14,6 +14,9 @@ body{min-height:100vh;overflow-y:auto;overflow-x:hidden}
 #bg.wait {background:linear-gradient(145deg,var(--wait-1),var(--wait-2))}
 #bg.delay{background:linear-gradient(145deg,var(--delay-1),var(--delay-2))}
 
+/* flash overlay */
+#flash{position:fixed;inset:0;background:#fff;opacity:0;pointer-events:none;z-index:50;transition:opacity .5s ease}
+
 /* pulse rings */
 .ring{position:absolute;top:140px;left:50%;transform:translateX(-50%);width:260px;height:260px;border-radius:50%;border:1.5px solid rgba(255,255,255,.25);opacity:0;display:none;pointer-events:none}
 .ring.on{display:block;animation:expand 2.5s ease-out infinite}
@@ -71,10 +74,22 @@ canvas#map{width:100%;border-radius:14px;display:block;border:1px solid rgba(255
 /* footer */
 #footer{width:calc(100% - 32px);max-width:420px;display:flex;flex-direction:column;align-items:center;gap:8px;z-index:1;padding-top:14px}
 #age{font-size:11px;opacity:.32}
+#countdown{font-size:11px;opacity:.28;font-variant-numeric:tabular-nums}
 #loc{font-size:11.5px;opacity:.48;display:flex;align-items:center;gap:5px}
 #btn{width:100%;padding:16px;background:rgba(255,255,255,.16);backdrop-filter:blur(12px);border:1px solid rgba(255,255,255,.18);border-radius:16px;color:#fff;font-size:16px;font-weight:600;cursor:pointer;display:flex;align-items:center;justify-content:center;gap:8px;transition:background .2s;font-family:inherit}
 #btn:disabled{opacity:.32;cursor:default}
 #btn:not(:disabled):hover{background:rgba(255,255,255,.25)}
+#alert-btn{padding:10px 20px;background:rgba(255,255,255,.1);border:1px solid rgba(255,255,255,.18);border-radius:100px;color:rgba(255,255,255,.75);font-size:13px;font-weight:500;cursor:pointer;display:none;align-items:center;gap:7px;transition:background .2s;font-family:inherit}
+#alert-btn.on{display:flex}
+#alert-btn:hover{background:rgba(255,255,255,.18)}
+#share-btn{padding:10px 20px;background:rgba(255,255,255,.1);border:1px solid rgba(255,255,255,.18);border-radius:100px;color:rgba(255,255,255,.75);font-size:13px;font-weight:500;cursor:pointer;display:none;align-items:center;gap:7px;transition:background .2s;font-family:inherit}
+#share-btn.on{display:flex}
+#share-btn:hover{background:rgba(255,255,255,.18)}
+#share-row{display:flex;gap:8px;justify-content:center;width:100%}
+
+/* toast */
+#toast{position:fixed;bottom:90px;left:50%;transform:translateX(-50%);background:rgba(0,0,0,.75);backdrop-filter:blur(10px);color:#fff;font-size:13px;font-weight:500;padding:9px 18px;border-radius:100px;opacity:0;pointer-events:none;z-index:60;transition:opacity .25s;white-space:nowrap}
+#toast.show{opacity:1}
 
 /* badges */
 .badge{position:fixed;top:14px;background:rgba(0,0,0,.32);border:1px solid rgba(255,255,255,.1);border-radius:8px;font-size:10px;padding:4px 9px;z-index:30;letter-spacing:.5px;font-family:inherit;cursor:default}
@@ -89,6 +104,9 @@ canvas#map{width:100%;border-radius:14px;display:block;border:1px solid rgba(255
 </style>
 </head>
 <body>
+<div id="flash"></div>
+<div id="toast"></div>
+
 <div id="bg">
   <div class="ring" id="r1"></div>
   <div class="ring lag" id="r2"></div>
@@ -127,9 +145,14 @@ canvas#map{width:100%;border-radius:14px;display:block;border:1px solid rgba(255
 
   <div id="footer">
     <div id="age"></div>
+    <div id="countdown"></div>
     <div id="loc">
       <svg width="9" height="12" viewBox="0 0 9 12" fill="currentColor"><path d="M4.5 0C2.015 0 0 2.015 0 4.5 0 7.875 4.5 12 4.5 12S9 7.875 9 4.5C9 2.015 6.985 0 4.5 0zm0 6a1.5 1.5 0 1 1 0-3 1.5 1.5 0 0 1 0 3z"/></svg>
       <span id="loc-text">Singapore</span>
+    </div>
+    <div id="share-row">
+      <button id="alert-btn">🔔 Remind me when safe</button>
+      <button id="share-btn">↗ Share</button>
     </div>
     <button id="btn" disabled>↺&nbsp; Check again</button>
   </div>
@@ -149,43 +172,77 @@ const NEA_URL     = 'https://api.data.gov.sg/v1/environment/rainfall';
 const GEO_URL     = 'https://nominatim.openstreetmap.org/reverse';
 const MAX_MM=5,I_THRESH=60,EPS_KM=5,MIN_PTS=2,DEF_SPEED=20,DELAY_T=10,WAIT_T=25;
 const MAX_HIST=6;
+const REFRESH_INTERVAL = 5 * 60; // seconds
 
 // Map canvas bounds (covers SG + buffer)
-const LAT_MIN=1.12,LAT_MAX=1.50,LNG_MIN=103.52,LNG_MAX=104.12;
+const LAT_MIN=1.12, LAT_MAX=1.52, LNG_MIN=103.52, LNG_MAX=104.18;
 
-// ── SINGAPORE COASTLINE (64-point polygon, clockwise from SW Tuas) ──────────
+// ── SINGAPORE MAIN ISLAND (clockwise from SW Tuas, ~80 points) ──────────────
+// Derived from actual coastline geography. Key landmarks:
+//   Tuas SW ~(1.317, 103.638) | Woodlands ~(1.452, 103.766) | Changi ~(1.366, 104.011)
+//   Marina Bay S ~(1.279, 103.852) | HarbourFront ~(1.255, 103.820)
 const SG = [
-  [1.263,103.636],[1.260,103.649],[1.252,103.661],[1.250,103.679],
-  [1.253,103.703],[1.265,103.717],[1.280,103.716],[1.305,103.695],
-  [1.324,103.673],[1.345,103.650],[1.360,103.635],[1.380,103.620],
-  [1.400,103.620],[1.420,103.630],[1.440,103.648],[1.455,103.670],
-  [1.462,103.700],[1.464,103.730],[1.465,103.765],[1.465,103.820],
-  [1.460,103.855],[1.455,103.880],[1.448,103.905],[1.438,103.923],
-  [1.425,103.935],[1.415,103.948],[1.405,103.960],[1.390,103.975],
-  [1.376,103.988],[1.362,104.004],[1.352,104.013],[1.345,104.019],
-  [1.330,104.005],[1.320,103.996],[1.308,103.980],[1.295,103.963],
-  [1.282,103.948],[1.275,103.933],[1.270,103.918],[1.267,103.900],
-  [1.270,103.885],[1.276,103.869],[1.279,103.855],[1.278,103.840],
-  [1.272,103.830],[1.265,103.820],[1.255,103.816],[1.248,103.820],
-  [1.245,103.808],[1.240,103.800],[1.235,103.795],[1.228,103.792],
-  [1.232,103.780],[1.240,103.772],[1.248,103.760],[1.253,103.748],
-  [1.248,103.735],[1.245,103.720],[1.248,103.705],[1.255,103.692],
-  [1.260,103.680],[1.264,103.665],[1.265,103.648],[1.263,103.636],
+  // SW → up west coast (Tuas → Pioneer → Lim Chu Kang → Kranji)
+  [1.317, 103.638],[1.324, 103.639],[1.333, 103.640],[1.342, 103.643],
+  [1.352, 103.650],[1.363, 103.658],[1.374, 103.666],[1.387, 103.673],
+  [1.401, 103.680],[1.416, 103.689],[1.428, 103.699],[1.438, 103.706],
+  // NW coast (Mandai → Sungei Buloh → Woodlands Checkpoint)
+  [1.446, 103.714],[1.451, 103.728],[1.453, 103.743],[1.453, 103.758],
+  [1.452, 103.769],[1.451, 103.781],
+  // N coast (Woodlands → Sembawang → Canberra → Yishun)
+  [1.452, 103.796],[1.453, 103.812],[1.453, 103.825],[1.451, 103.836],
+  [1.449, 103.847],[1.446, 103.858],
+  // NE coast (Seletar → Punggol → Punggol Point)
+  [1.441, 103.868],[1.435, 103.877],[1.427, 103.887],[1.420, 103.896],
+  [1.413, 103.903],[1.405, 103.909],
+  // East toward Changi (Pasir Ris → Loyang → Changi Village)
+  [1.396, 103.917],[1.386, 103.932],[1.378, 103.945],[1.372, 103.959],
+  [1.376, 103.972],[1.383, 103.985],[1.383, 103.999],
+  // Changi tip (NE protrusion) and back south
+  [1.373, 104.008],[1.358, 104.012],[1.345, 104.009],
+  // SE coast going south (Tanah Merah → East Coast)
+  [1.330, 104.001],[1.317, 103.988],[1.310, 103.973],[1.304, 103.958],
+  [1.299, 103.941],[1.296, 103.924],[1.294, 103.908],
+  // S coast (Tanjong Rhu → Kallang → Marina Bay)
+  [1.292, 103.892],[1.288, 103.876],[1.284, 103.866],[1.281, 103.859],
+  [1.279, 103.852],[1.277, 103.844],
+  // SW coast (Tanjong Pagar → Keppel → HarbourFront)
+  [1.273, 103.836],[1.268, 103.829],[1.263, 103.824],[1.259, 103.820],
+  [1.255, 103.820],
+  // West coast (Labrador → Pasir Panjang → West Coast → Jurong)
+  [1.252, 103.812],[1.255, 103.803],[1.261, 103.796],[1.268, 103.789],
+  [1.277, 103.781],[1.285, 103.774],[1.293, 103.764],[1.300, 103.755],
+  [1.307, 103.747],[1.313, 103.737],[1.318, 103.726],[1.323, 103.717],
+  // Pioneer → Tuas industrial
+  [1.330, 103.707],[1.337, 103.698],[1.341, 103.685],[1.340, 103.668],
+  [1.334, 103.654],[1.325, 103.643],
+  [1.317, 103.638], // close
 ];
 
 // Sentosa Island
 const SENTOSA = [
-  [1.253,103.800],[1.257,103.818],[1.255,103.840],[1.248,103.858],
-  [1.242,103.848],[1.238,103.825],[1.242,103.803],[1.250,103.800],
+  [1.249, 103.800],[1.247, 103.810],[1.251, 103.822],[1.249, 103.835],
+  [1.244, 103.847],[1.239, 103.843],[1.237, 103.830],[1.240, 103.815],
+  [1.244, 103.803],[1.249, 103.800],
+];
+
+// Jurong Island (petrochemical, south of Jurong)
+const JURONG_ISLAND = [
+  [1.277, 103.693],[1.271, 103.702],[1.265, 103.710],[1.264, 103.726],
+  [1.268, 103.737],[1.278, 103.737],[1.285, 103.730],[1.288, 103.718],
+  [1.284, 103.705],[1.277, 103.693],
 ];
 
 // ── STATE ───────────────────────────────────────────────────────────────────
 let userLat=DEFAULT_LAT, userLng=DEFAULT_LNG, locationLabel='Singapore';
-let liveFrame=null;           // {cells,clusters,decision,source,timestamp}
-let historyFrames=[];         // newest first, up to MAX_HIST entries
-let viewingIdx=null;          // null=live, 0=newest history, MAX_HIST-1=oldest
+let liveFrame=null;
+let historyFrames=[];
+let viewingIdx=null;
 let isPlaying=false, playTimer=null;
 let mapRaf=null, pulseT=0;
+let prevState=null;
+let countdownSec=REFRESH_INTERVAL, countdownInterval=null;
+let alertScheduled=false, alertTimeout=null;
 
 // ── GEO HELPERS ─────────────────────────────────────────────────────────────
 function hav(a1,o1,a2,o2){
@@ -311,7 +368,6 @@ function mockCells(){
   ];
 }
 function buildMockHistory(baseCells){
-  // Simulate storm moving south over past 30 min (0.013°lat ≈ 1.45km per 5min step)
   return Array.from({length:MAX_HIST},(_,i)=>{
     const offset=(MAX_HIST-i)*0.013;
     const cells=baseCells.map(c=>c.intensity>I_THRESH?{...c,lat:c.lat+offset}:c);
@@ -338,26 +394,23 @@ function drawPolygon(ctx,poly,W,H,fill,stroke,lw=1){
 
 function drawRainClouds(ctx,cells,W,H){
   ctx.save();
-  ctx.globalCompositeOperation='lighter'; // additive: overlapping clouds get brighter
+  ctx.globalCompositeOperation='lighter';
   for(const c of cells){
     if(c.intensity<6)continue;
     const[x,y]=toXY(c.lat,c.lng,W,H);
     const t=c.intensity/255;
-    const r=(W*0.042)+(t*W*0.048); // blob radius grows with intensity
+    const r=(W*0.042)+(t*W*0.048);
     const g=ctx.createRadialGradient(x,y,0,x,y,r);
     if(t<0.30){
-      // light — blue
       g.addColorStop(0,`rgba(60,110,255,${0.32+t*0.8})`);
-      g.addColorStop(0.45,`rgba(60,110,255,${0.12})`);
+      g.addColorStop(0.45,`rgba(60,110,255,0.12)`);
       g.addColorStop(1,`rgba(60,110,255,0)`);
     }else if(t<0.65){
-      // moderate — yellow
       const s=(t-0.30)/0.35;
       g.addColorStop(0,`rgba(255,${Math.round(220-s*80)},30,${0.45+t*0.35})`);
       g.addColorStop(0.45,`rgba(255,180,30,0.14)`);
       g.addColorStop(1,`rgba(255,180,30,0)`);
     }else{
-      // heavy — orange→red
       const s=(t-0.65)/0.35;
       g.addColorStop(0,`rgba(255,${Math.round(80-s*80)},30,${0.6+t*0.3})`);
       g.addColorStop(0.45,`rgba(255,50,30,0.18)`);
@@ -373,27 +426,19 @@ function drawStormCluster(ctx,c,W,H,pulse){
   const kmPx=W/((LNG_MAX-LNG_MIN)*111.32*Math.cos(c.centroid.lat*Math.PI/180));
   const baseR=Math.max(10,c.radiusKm*kmPx);
   const glowR=baseR*(1.4+pulse*0.25);
-
-  // outer glow
   const og=ctx.createRadialGradient(cx,cy,baseR*0.6,cx,cy,glowR);
   og.addColorStop(0,`rgba(255,90,60,${0.18+pulse*0.06})`);
   og.addColorStop(1,'rgba(255,70,40,0)');
   ctx.fillStyle=og;ctx.beginPath();ctx.arc(cx,cy,glowR,0,Math.PI*2);ctx.fill();
-
-  // inner fill
   const ig=ctx.createRadialGradient(cx,cy,0,cx,cy,baseR);
   ig.addColorStop(0,'rgba(255,110,80,0.22)');
   ig.addColorStop(0.7,'rgba(255,80,60,0.12)');
   ig.addColorStop(1,'rgba(255,80,60,0.03)');
   ctx.fillStyle=ig;ctx.beginPath();ctx.arc(cx,cy,baseR,0,Math.PI*2);ctx.fill();
-
-  // dashed border ring
   ctx.save();ctx.setLineDash([4,3]);
   ctx.strokeStyle=`rgba(255,130,100,${0.55+pulse*0.25})`;ctx.lineWidth=1.5;
   ctx.beginPath();ctx.arc(cx,cy,baseR,0,Math.PI*2);ctx.stroke();
   ctx.restore();
-
-  // centroid dot
   ctx.fillStyle='rgba(255,160,140,0.92)';ctx.beginPath();ctx.arc(cx,cy,3,0,Math.PI*2);ctx.fill();
 }
 
@@ -402,50 +447,46 @@ function drawMap(frame,uLat,uLng,pulse){
   const dpr=window.devicePixelRatio||1;
   const W=canvas.offsetWidth;
   if(!W)return;
-  const H=Math.round(W*0.56);
+  const H=Math.round(W*0.60);
   if(canvas.width!==W*dpr){canvas.width=W*dpr;canvas.height=H*dpr;canvas.style.height=H+'px';}
   const ctx=canvas.getContext('2d');
   ctx.save();ctx.scale(dpr,dpr);
 
-  // sea background
-  const sea=ctx.createLinearGradient(0,0,0,H);
-  sea.addColorStop(0,'#070b1c');sea.addColorStop(1,'#0c1128');
+  // Sea background
+  const sea=ctx.createLinearGradient(0,0,W,H);
+  sea.addColorStop(0,'#06091a');sea.addColorStop(1,'#0a0f22');
   ctx.fillStyle=sea;ctx.fillRect(0,0,W,H);
 
-  // subtle lat/lng grid
-  ctx.strokeStyle='rgba(255,255,255,0.035)';ctx.lineWidth=.5;
-  for(let la=1.15;la<=1.48;la+=0.05){const[,y]=toXY(la,LNG_MIN,W,H);ctx.beginPath();ctx.moveTo(0,y);ctx.lineTo(W,y);ctx.stroke();}
-  for(let lo=103.55;lo<=104.10;lo+=0.05){const[x]=toXY(LAT_MIN,lo,W,H);ctx.beginPath();ctx.moveTo(x,0);ctx.lineTo(x,H);ctx.stroke();}
+  // Subtle lat/lng grid
+  ctx.strokeStyle='rgba(255,255,255,0.028)';ctx.lineWidth=.5;
+  for(let la=1.15;la<=1.50;la+=0.05){const[,y]=toXY(la,LNG_MIN,W,H);ctx.beginPath();ctx.moveTo(0,y);ctx.lineTo(W,y);ctx.stroke();}
+  for(let lo=103.55;lo<=104.15;lo+=0.05){const[x]=toXY(LAT_MIN,lo,W,H);ctx.beginPath();ctx.moveTo(x,0);ctx.lineTo(x,H);ctx.stroke();}
 
-  // Singapore main island (land fill then coastline)
-  drawPolygon(ctx,SG,W,H,'rgba(28,38,62,0.9)','rgba(70,110,175,0.55)',1.3);
-  // Sentosa
-  drawPolygon(ctx,SENTOSA,W,H,'rgba(28,38,62,0.85)','rgba(70,110,175,0.4)',1);
+  // Island fill: slightly lighter than sea so landmass reads clearly
+  drawPolygon(ctx,SG,W,H,'rgba(22,34,58,0.95)','rgba(60,100,175,0.6)',1.4);
+  drawPolygon(ctx,SENTOSA,W,H,'rgba(22,34,58,0.9)','rgba(60,100,175,0.45)',1);
+  drawPolygon(ctx,JURONG_ISLAND,W,H,'rgba(22,34,58,0.85)','rgba(60,100,175,0.35)',0.8);
 
-  // Rain cloud blobs
+  // Rain cloud blobs (additive blending)
   drawRainClouds(ctx,frame.cells,W,H);
 
-  // Storm cluster glows (on top of clouds)
+  // Storm cluster glows
   for(const c of frame.clusters)drawStormCluster(ctx,c,W,H,pulse);
 
-  // User location — pulsing white dot
+  // User location dot
   const[ux,uy]=toXY(uLat,uLng,W,H);
-  // outer pulse ring
   ctx.beginPath();ctx.arc(ux,uy,8+pulse*7,0,Math.PI*2);
   ctx.fillStyle=`rgba(255,255,255,${0.15*(1-pulse)})`;ctx.fill();
-  // inner halo
   ctx.beginPath();ctx.arc(ux,uy,6,0,Math.PI*2);
   ctx.fillStyle='rgba(255,255,255,0.25)';ctx.fill();
-  // solid dot
   ctx.beginPath();ctx.arc(ux,uy,4,0,Math.PI*2);
   ctx.fillStyle='#fff';ctx.fill();
   ctx.strokeStyle='rgba(0,0,0,0.3)';ctx.lineWidth=1;ctx.stroke();
-  // label
   ctx.font=`bold 8.5px -apple-system,sans-serif`;
   ctx.fillStyle='rgba(255,255,255,0.7)';ctx.textAlign='center';
   ctx.fillText('You',ux,uy+15);
 
-  // direction line from user to nearest storm
+  // Direction line to nearest storm
   if(frame.decision?.storm?.centroid){
     const sc=frame.decision.storm.centroid;
     const[sx,sy]=toXY(sc.lat,sc.lng,W,H);
@@ -459,7 +500,7 @@ function drawMap(frame,uLat,uLng,pulse){
     }
   }
 
-  // Compass (bottom-right)
+  // Compass rose (bottom-right)
   const cr=10,cpx=W-16,cpy=H-16;
   ctx.font='7.5px sans-serif';ctx.fillStyle='rgba(255,255,255,0.28)';ctx.textAlign='center';
   ctx.fillText('N',cpx,cpy-cr-1);ctx.fillText('S',cpx,cpy+cr+8);
@@ -487,8 +528,7 @@ function updateTimeline(){
   track.innerHTML='';
   historyFrames.forEach((f,i)=>{
     const div=document.createElement('div');div.className='tldot'+(i===viewingIdx?' active':'');
-    const ts=new Date(f.timestamp);
-    const mins=Math.round((Date.now()-ts)/60000);
+    const mins=Math.round((Date.now()-new Date(f.timestamp))/60000);
     div.innerHTML=`<div class="tldot-circle"></div><div class="tldot-lbl">${mins}m</div>`;
     div.addEventListener('click',()=>showFrame(i));
     track.appendChild(div);
@@ -497,20 +537,16 @@ function updateTimeline(){
 }
 
 function showFrame(idx){
-  stopPlay();
-  viewingIdx=idx;
-  updateTimeline();
+  stopPlay();viewingIdx=idx;updateTimeline();
   const frame=historyFrames[idx];
   const banner=document.getElementById('history-banner');
   const mins=Math.round((Date.now()-new Date(frame.timestamp))/60000);
-  banner.textContent=`◷ Viewing radar from ${mins} minutes ago`;
-  banner.classList.add('on');
+  banner.textContent=`◷ Viewing radar from ${mins} minutes ago`;banner.classList.add('on');
   updateDecisionUI(frame.decision,frame.clusters,frame.source,frame.timestamp);
 }
 
 function showLive(){
-  stopPlay();
-  viewingIdx=null;
+  stopPlay();viewingIdx=null;
   document.getElementById('history-banner').classList.remove('on');
   updateTimeline();
   if(liveFrame)updateDecisionUI(liveFrame.decision,liveFrame.clusters,liveFrame.source,liveFrame.timestamp);
@@ -536,6 +572,83 @@ function stopPlay(){
   isPlaying=false;document.getElementById('tl-play').textContent='▶';clearTimeout(playTimer);
 }
 
+// ── FLASH ON STATE CHANGE ────────────────────────────────────────────────────
+function triggerFlash(){
+  const el=document.getElementById('flash');
+  el.style.transition='none';
+  el.style.opacity='0.28';
+  requestAnimationFrame(()=>requestAnimationFrame(()=>{
+    el.style.transition='opacity .55s ease';
+    el.style.opacity='0';
+  }));
+}
+
+// ── TOAST ────────────────────────────────────────────────────────────────────
+function showToast(msg){
+  const t=document.getElementById('toast');
+  t.textContent=msg;t.classList.add('show');
+  setTimeout(()=>t.classList.remove('show'),2200);
+}
+
+// ── AUTO-REFRESH COUNTDOWN ───────────────────────────────────────────────────
+function startCountdown(){
+  clearInterval(countdownInterval);
+  countdownSec=REFRESH_INTERVAL;
+  countdownInterval=setInterval(()=>{
+    countdownSec=Math.max(0,countdownSec-1);
+    const m=Math.floor(countdownSec/60),s=countdownSec%60;
+    document.getElementById('countdown').textContent=
+      countdownSec>0?`Next update in ${m}:${String(s).padStart(2,'0')}`:'';
+  },1000);
+}
+
+// ── SHARE ────────────────────────────────────────────────────────────────────
+function buildShareText(){
+  if(!liveFrame)return'Check RainGo for rain conditions in Singapore.';
+  const d=liveFrame.decision, loc=locationLabel||'Singapore';
+  if(d.state==='GO')    return`RainGo ✅ Safe to go at ${loc} — no rain nearby. (${d.confidence}% confidence)`;
+  if(d.state==='WAIT')  return`RainGo ⏳ Rain in ${d.minutes} min at ${loc}. Best to wait. (${d.confidence}% confidence)`;
+  if(d.minutes===0)     return`RainGo 🌧 It's raining at ${loc} right now.`;
+  return`RainGo 🌧 Rain hits ${loc} in ${d.minutes} min — delay your trip. (${d.confidence}% confidence)`;
+}
+async function doShare(){
+  const text=buildShareText();
+  if(navigator.share){
+    try{await navigator.share({title:'RainGo',text});return;}catch{}
+  }
+  try{await navigator.clipboard.writeText(text);showToast('Copied to clipboard');}
+  catch{showToast('Unable to copy');}
+}
+
+// ── NOTIFICATIONS ────────────────────────────────────────────────────────────
+async function toggleAlert(){
+  if(alertScheduled){cancelAlert();return;}
+  if(!('Notification' in window)){showToast('Notifications not supported in this browser');return;}
+  const perm=await Notification.requestPermission();
+  if(perm!=='granted'){showToast('Please allow notifications in your browser settings');return;}
+  const minutes=Math.max(5,liveFrame?.decision?.minutes??20);
+  clearTimeout(alertTimeout);
+  alertTimeout=setTimeout(()=>{
+    try{new Notification('RainGo — time to check',{body:'Tap to see if it\'s safe to head out now.',icon:'data:image/svg+xml,<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 32 32"><text y="26" font-size="26">🌦️</text></svg>'});}
+    catch{}
+    alertScheduled=false;updateAlertButton();
+  },minutes*60*1000);
+  alertScheduled=true;updateAlertButton();
+  showToast(`Reminder set for ${minutes} min from now`);
+}
+function cancelAlert(){
+  clearTimeout(alertTimeout);alertScheduled=false;updateAlertButton();
+  showToast('Reminder cancelled');
+}
+function updateAlertButton(){
+  const btn=document.getElementById('alert-btn');
+  if(alertScheduled){
+    btn.textContent='🔕 Cancel reminder';
+  }else{
+    btn.innerHTML='🔔 Remind me when safe';
+  }
+}
+
 // ── RENDER ───────────────────────────────────────────────────────────────────
 const ICONS={GO:'☀️',WAIT:'🌦️',DELAY:'⛈️'};
 function hl(d){
@@ -552,21 +665,27 @@ function renderLoading(msg){
   document.getElementById('btn').disabled=true;
   document.getElementById('age').textContent='';
   document.getElementById('pred-strip').classList.remove('on');
+  document.getElementById('alert-btn').classList.remove('on');
+  document.getElementById('share-btn').classList.remove('on');
 }
 
 function updateDecisionUI(decision,clusters,source,timestamp){
-  // background
+  // Background + rings
   document.getElementById('bg').className=decision.state.toLowerCase();
   const rings=decision.state!=='GO';
   document.getElementById('r1').className='ring'+(rings?' on':'');
   document.getElementById('r2').className='ring lag'+(rings?' on':'');
 
-  // source badge
+  // Source badge
   const sb=document.getElementById('src-badge');
   sb.textContent=source==='live'?'NEA LIVE':'NEA DEMO';
   sb.style.color=source==='live'?'rgba(122,226,140,.85)':'rgba(255,209,102,.75)';
 
-  // decision card
+  // Flash if state changed
+  if(prevState&&prevState!==decision.state)triggerFlash();
+  prevState=decision.state;
+
+  // Decision card
   const showNum=(decision.state==='WAIT'||decision.state==='DELAY')&&decision.minutes>0&&decision.minutes<999;
   document.getElementById('content').innerHTML=`
     <div class="icon">${ICONS[decision.state]??'🌫️'}</div>
@@ -578,7 +697,7 @@ function updateDecisionUI(decision,clusters,source,timestamp){
       ${decision.confidence}% confidence
     </div>`;
 
-  // prediction strip
+  // Prediction strip
   const strip=document.getElementById('pred-strip');
   if(decision.storm&&decision.state!=='GO'){
     strip.classList.add('on');
@@ -590,13 +709,22 @@ function updateDecisionUI(decision,clusters,source,timestamp){
       `${Math.round(decision.storm.radiusKm*2)} km`;
   }else{strip.classList.remove('on');}
 
-  // data age
+  // Age
   const age=Math.round((Date.now()-new Date(timestamp))/1000);
   document.getElementById('age').textContent=
     age<60?'Radar updated just now':`Radar updated ${Math.floor(age/60)} min ago`;
   document.getElementById('btn').disabled=false;
 
-  // debug
+  // Alert button — show only when WAIT or DELAY
+  const alertBtn=document.getElementById('alert-btn');
+  if(decision.state!=='GO'){alertBtn.classList.add('on');}
+  else{alertBtn.classList.remove('on');if(alertScheduled)cancelAlert();}
+  updateAlertButton();
+
+  // Share button — always show once we have data
+  document.getElementById('share-btn').classList.add('on');
+
+  // Debug
   document.getElementById('dbg-pre').textContent=JSON.stringify({
     location:{lat:+userLat.toFixed(5),lng:+userLng.toFixed(5),label:locationLabel},
     source,timestamp,
@@ -625,15 +753,12 @@ async function refresh(){
   const clusters=clusterCells(cells);
   const decision=decide(userLat,userLng,clusters);
 
-  // Push previous live frame to history
   if(liveFrame){
     historyFrames.unshift(liveFrame);
     if(historyFrames.length>MAX_HIST)historyFrames.pop();
   }
-
   liveFrame={cells,clusters,decision,source:radarData.source,timestamp:radarData.timestamp};
 
-  // On first load with mock data, pre-fill history so timeline is immediately useful
   if(historyFrames.length===0&&radarData.source==='mock'){
     historyFrames=buildMockHistory(cells);
   }
@@ -642,14 +767,17 @@ async function refresh(){
   document.getElementById('history-banner').classList.remove('on');
   updateTimeline();
   startAnim();
+  startCountdown();
 
-  refreshTimer=setTimeout(refresh,5*60*1000);
+  refreshTimer=setTimeout(refresh,REFRESH_INTERVAL*1000);
 }
 
 // ── EVENTS ───────────────────────────────────────────────────────────────────
 document.getElementById('tl-play').addEventListener('click',startPlay);
 document.getElementById('tl-live').addEventListener('click',showLive);
-document.getElementById('btn').addEventListener('click',refresh);
+document.getElementById('btn').addEventListener('click',()=>{if(alertScheduled)cancelAlert();refresh();});
+document.getElementById('alert-btn').addEventListener('click',toggleAlert);
+document.getElementById('share-btn').addEventListener('click',doShare);
 document.getElementById('dbg-btn').addEventListener('click',()=>document.getElementById('debug').classList.toggle('open'));
 window.addEventListener('resize',()=>{
   const frame=viewingIdx===null?liveFrame:historyFrames[viewingIdx];

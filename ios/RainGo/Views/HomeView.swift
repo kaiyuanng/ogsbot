@@ -4,10 +4,17 @@ import SwiftUI
 
 struct HomeView: View {
     @StateObject private var vm = HomeViewModel()
+    @State private var flashOpacity: Double = 0
 
     var body: some View {
         ZStack {
             backgroundGradient.ignoresSafeArea()
+
+            // State-change flash overlay
+            Color.white
+                .ignoresSafeArea()
+                .opacity(flashOpacity)
+                .allowsHitTesting(false)
 
             if let rainState = vm.decision.flatMap({ RainState($0.state) }),
                rainState != .go {
@@ -15,16 +22,46 @@ struct HomeView: View {
             }
 
             VStack(spacing: 0) {
+                topBar
+                    .padding(.top, 56)
+                    .padding(.horizontal, 20)
+
                 Spacer()
+
                 content
                     .transition(.opacity.combined(with: .scale(scale: 0.97)))
+
                 Spacer()
+
                 bottomBar
                     .padding(.bottom, 52)
             }
         }
         .animation(.easeInOut(duration: 0.45), value: vm.decision?.state)
+        .onChange(of: vm.stateDidChange) { changed in
+            guard changed else { return }
+            withAnimation(.easeOut(duration: 0.08)) { flashOpacity = 0.35 }
+            withAnimation(.easeIn(duration: 0.5).delay(0.08)) { flashOpacity = 0 }
+        }
         .task { await vm.fetchDecision() }
+    }
+
+    // MARK: - Top bar (share)
+
+    private var topBar: some View {
+        HStack {
+            Spacer()
+            if vm.decision != nil {
+                ShareLink(item: vm.shareText) {
+                    Image(systemName: "square.and.arrow.up")
+                        .font(.system(size: 18, weight: .medium))
+                        .foregroundColor(.white.opacity(0.65))
+                        .frame(width: 40, height: 40)
+                        .background(.ultraThinMaterial, in: Circle())
+                }
+                .transition(.opacity.combined(with: .scale(scale: 0.8)))
+            }
+        }
     }
 
     // MARK: - Content switcher
@@ -46,13 +83,43 @@ struct HomeView: View {
 
     private var bottomBar: some View {
         VStack(spacing: 10) {
-            if let age = vm.decision?.dataAgeSeconds {
+            // Countdown / age
+            if vm.isLoading {
+                EmptyView()
+            } else if let age = vm.decision?.dataAgeSeconds {
                 Text(ageLabel(age))
                     .font(.caption)
-                    .foregroundColor(.white.opacity(0.45))
+                    .foregroundColor(.white.opacity(0.35))
             }
 
+            Text(countdownLabel)
+                .font(.caption)
+                .foregroundColor(.white.opacity(0.35))
+                .animation(.none, value: vm.nextRefreshIn)
+
+            // "Notify me when safe" — only shown on WAIT / DELAY
+            if let state = vm.decision.flatMap({ RainState($0.state) }), state != .go, !vm.isLoading {
+                Button {
+                    vm.hasScheduledAlert ? vm.cancelAlert() : vm.scheduleAlert()
+                } label: {
+                    HStack(spacing: 7) {
+                        Image(systemName: vm.hasScheduledAlert ? "bell.slash" : "bell")
+                            .font(.system(size: 14, weight: .medium))
+                        Text(vm.hasScheduledAlert ? "Cancel reminder" : "Remind me when safe")
+                            .font(.system(size: 14, weight: .medium))
+                    }
+                    .foregroundColor(.white.opacity(0.75))
+                    .padding(.horizontal, 18)
+                    .padding(.vertical, 10)
+                    .background(Color.white.opacity(0.1), in: Capsule())
+                    .overlay(Capsule().stroke(Color.white.opacity(0.18), lineWidth: 1))
+                }
+                .transition(.opacity.combined(with: .move(edge: .bottom)))
+            }
+
+            // Check again button
             Button {
+                vm.cancelAlert()
                 Task { await vm.fetchDecision() }
             } label: {
                 HStack(spacing: 8) {
@@ -79,7 +146,7 @@ struct HomeView: View {
         }
     }
 
-    // MARK: - Gradient
+    // MARK: - Helpers
 
     private var backgroundGradient: LinearGradient {
         let colors = gradientColors(for: vm.decision.flatMap { RainState($0.state) })
@@ -101,6 +168,13 @@ struct HomeView: View {
 
     private func ageLabel(_ seconds: Int) -> String {
         seconds < 60 ? "Radar updated just now" : "Radar updated \(seconds / 60) min ago"
+    }
+
+    private var countdownLabel: String {
+        guard !vm.isLoading else { return "" }
+        let s = vm.nextRefreshIn
+        let m = s / 60, sec = s % 60
+        return "Next update in \(m):\(String(format: "%02d", sec))"
     }
 }
 
@@ -126,13 +200,11 @@ private struct DecisionView: View {
 
     var body: some View {
         VStack(spacing: 32) {
-            // Icon
             Image(systemName: iconName)
                 .font(.system(size: 64, weight: .light))
                 .foregroundColor(.white.opacity(0.9))
                 .shadow(color: .black.opacity(0.2), radius: 8, x: 0, y: 4)
 
-            // Headline
             Text(headline)
                 .font(.system(size: 46, weight: .bold, design: .rounded))
                 .foregroundColor(.white)
@@ -141,14 +213,12 @@ private struct DecisionView: View {
                 .shadow(color: .black.opacity(0.15), radius: 4, x: 0, y: 2)
                 .padding(.horizontal, 28)
 
-            // Subtext
             Text(decision.message)
                 .font(.system(size: 17, weight: .regular))
                 .foregroundColor(.white.opacity(0.8))
                 .multilineTextAlignment(.center)
                 .padding(.horizontal, 40)
 
-            // Confidence pill
             HStack(spacing: 6) {
                 Circle()
                     .fill(confidenceColor)

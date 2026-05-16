@@ -226,6 +226,47 @@ Both services start automatically on boot.
 
 ---
 
+## PART 5 — Home Screen Widget
+
+The widget shows GO / WAIT / DELAY at a glance without opening the app. It reads the last result saved by the main app.
+
+### Step 1 — Add the widget extension target
+
+1. In Xcode, go to **File → New → Target**
+2. Choose **Widget Extension** → click **Next**
+3. Fill in:
+   - **Product Name:** `RainGoWidget`
+   - **Include Configuration App Intent:** unchecked
+4. Click **Finish**
+5. When prompted "Activate scheme?", click **Activate**
+
+### Step 2 — Add the App Group capability
+
+Do this for **both** the `RainGo` target and the `RainGoWidget` target:
+
+1. Click the project (blue icon) in the file list → select the target
+2. Go to the **Signing & Capabilities** tab
+3. Click **+ Capability** → search for **App Groups** → add it
+4. Click **+** under App Groups and enter: `group.com.raingo.app`
+   - Use the same identifier on both targets
+
+### Step 3 — Add the widget source files
+
+Right-click the **RainGoWidget** group in Xcode → **Add Files to "RainGoWidget"…**
+
+Add these two files from `ogsbot/ios/RainGo/Widget/`:
+- `RainGoWidget.swift` — **add to the RainGoWidget target only**
+- `WidgetSharedStore.swift` — **add to both targets** (check both boxes)
+
+### Step 4 — Test
+
+Run the main app on your iPhone first (so it writes data to the App Group store).
+Then long-press the home screen → tap **+** → search for **RainGo** → add the small or medium widget.
+
+The widget refreshes automatically every 5 minutes, matching the radar cadence.
+
+---
+
 ## PART 4 — App Store Submission
 
 ### Before you submit, prepare:
