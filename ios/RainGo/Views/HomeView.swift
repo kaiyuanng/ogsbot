@@ -244,9 +244,9 @@ private struct DecisionView: View {
 
     private var headline: String {
         switch RainState(decision.state) {
-        case .go:    return "Safe to go now"
-        case .wait:  return "Wait \(decision.minutes) minutes"
-        case .delay: return decision.minutes == 0 ? "It's raining now" : "Rain in \(decision.minutes) min"
+        case .go:    return "You're clear to go"
+        case .wait:  return "Rain in \(decision.minutes) min"
+        case .delay: return decision.minutes == 0 ? "Raining at your location" : "Rain arriving in \(decision.minutes) min"
         default:     return "—"
         }
     }

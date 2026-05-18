@@ -170,7 +170,10 @@ const DEFAULT_LAT = 1.2657294;
 const DEFAULT_LNG = 103.8227098;
 const NEA_URL     = 'https://api.data.gov.sg/v1/environment/rainfall';
 const GEO_URL     = 'https://nominatim.openstreetmap.org/reverse';
-const MAX_MM=5,I_THRESH=60,EPS_KM=5,MIN_PTS=2,DEF_SPEED=20,DELAY_T=10,WAIT_T=25;
+const MAX_MM=5,I_THRESH=20,EPS_KM=5,MIN_PTS=2,DEF_SPEED=20,DELAY_T=10,WAIT_T=25;
+const DRIZZLE_AVG_I=80;   // below this = drizzle / light rain
+const NEAREST_KM=3;       // nearest-station check radius (km)
+const NEAREST_MIN_I=15;   // minimum intensity for nearest-station check
 const MAX_HIST=6;
 const REFRESH_INTERVAL = 5 * 60; // seconds
 
@@ -287,31 +290,87 @@ function clusterCells(cells){
     return{centroid:{lat,lng},points:pts,maxI,avgI,radiusKm};
   });
 }
-function decide(lat,lng,clusters){
-  if(!clusters.length)
-    return{state:'GO',minutes:999,confidence:90,message:'No rain detected nearby.',storm:null};
+// Find the closest station within NEAREST_KM reporting intensity > NEAREST_MIN_I
+function nearestWetStation(cells,lat,lng){
+  let best=null,bestDist=Infinity;
+  for(const c of cells){
+    if((c.intensity||0)<NEAREST_MIN_I)continue;
+    const d=hav(lat,lng,c.lat,c.lng);
+    if(d<bestDist){bestDist=d;best=c;}
+  }
+  return best&&bestDist<=NEAREST_KM?{station:best,dist:bestDist}:null;
+}
+
+// Estimate drizzle clearing from intensity trend across history frames
+function drizzleClearHint(lat,lng){
+  if(historyFrames.length<2)return'';
+  const s0=nearestWetStation(historyFrames[0].cells,lat,lng);
+  const s1=nearestWetStation(historyFrames[Math.min(1,historyFrames.length-1)].cells,lat,lng);
+  if(!s0||!s1)return'';
+  const delta=s1.station.intensity-s0.station.intensity; // older minus newer
+  if(delta>30)return' Intensity easing — may clear in 5–10 min.';
+  if(delta>10)return' Gradually easing — may clear in 10–15 min.';
+  if(delta<-20)return' Building — could get heavier.';
+  return'';
+}
+
+function decide(lat,lng,clusters,cells=[]){
+  // No clusters — run nearest-station drizzle check
+  if(!clusters.length){
+    const wet=nearestWetStation(cells,lat,lng);
+    if(wet){
+      const km=wet.dist.toFixed(1);
+      return{state:'WAIT',minutes:0,confidence:65,
+        message:`Light drizzle detected ${km} km from your location. May reach you soon.`,storm:null};
+    }
+    return{state:'GO',minutes:999,confidence:90,
+      message:"No rain at your location. You're clear to go.",storm:null};
+  }
+
   let minT=Infinity,best=null,weak=true;
+
   for(const c of clusters){
     const d=hav(lat,lng,c.centroid.lat,c.centroid.lng);
+    const isDrizzle=(c.avgI||100)<DRIZZLE_AVG_I;
+
+    // User is inside this storm
     if(d<=c.radiusKm){
       const b=bearingDeg(lat,lng,c.centroid.lat,c.centroid.lng);
-      return{state:'DELAY',minutes:0,confidence:80,message:"You're inside the rain right now.",
+      const hint=drizzleClearHint(lat,lng);
+      const msg=isDrizzle
+        ?`It's drizzling at your location right now.${hint||' Should clear soon — keep an eye on it.'}`
+        :`It's raining at your location right now. Wait for it to pass.${hint}`;
+      return{state:'DELAY',minutes:0,confidence:isDrizzle?70:80,message:msg,
         storm:{bearing:b,direction:compass(b),edgeDistKm:0,radiusKm:c.radiusKm,centroid:c.centroid}};
     }
-    if(c.avgI>80)weak=false;
+
+    if((c.avgI||100)>DRIZZLE_AVG_I)weak=false;
     const t=((d-c.radiusKm)/DEF_SPEED)*60;
     if(t<minT){minT=t;best=c;}
   }
+
+  // All clusters moving away
   if(minT===Infinity||!best)
-    return{state:'GO',minutes:999,confidence:80,message:'Rain moving away. Safe to go.',storm:null};
+    return{state:'GO',minutes:999,confidence:80,
+      message:"Rain is moving away from your location. You're clear to go.",storm:null};
+
   const m=Math.round(minT),conf=weak?70:80;
+  const isDrizzle=(best.avgI||100)<DRIZZLE_AVG_I;
   const b=bearingDeg(lat,lng,best.centroid.lat,best.centroid.lng);
   const storm={bearing:b,direction:compass(b),
     edgeDistKm:+(hav(lat,lng,best.centroid.lat,best.centroid.lng)-best.radiusKm).toFixed(1),
     radiusKm:best.radiusKm,centroid:best.centroid};
-  if(m<DELAY_T)return{state:'DELAY',minutes:m,confidence:conf,message:`Rain reaches you in about ${m} minutes.`,storm};
-  if(m<WAIT_T) return{state:'WAIT', minutes:m,confidence:conf,message:`Rain will reach you in about ${m} minutes.`,storm};
-  return{state:'GO',minutes:m,confidence:conf,message:`Rain is ${m} minutes away — safe to go.`,storm};
+
+  if(m<DELAY_T)return{state:'DELAY',minutes:m,confidence:conf,storm,
+    message:isDrizzle
+      ?`Light rain is reaching your location in about ${m} minutes.`
+      :`Rain is reaching your location in about ${m} minutes. Stay covered.`};
+  if(m<WAIT_T)return{state:'WAIT',minutes:m,confidence:conf,storm,
+    message:isDrizzle
+      ?`Light rain is heading your way — about ${m} minutes out. You may still have time.`
+      :`Rain is heading to your location — about ${m} minutes away. Best to wait here.`};
+  return{state:'GO',minutes:m,confidence:conf,storm,
+    message:`Rain is ${m} minutes from your location. Plenty of time — head out now.`};
 }
 
 // ── DATA FETCH ──────────────────────────────────────────────────────────────
@@ -372,7 +431,7 @@ function buildMockHistory(baseCells){
     const offset=(MAX_HIST-i)*0.013;
     const cells=baseCells.map(c=>c.intensity>I_THRESH?{...c,lat:c.lat+offset}:c);
     const clusters=clusterCells(cells);
-    const decision=decide(userLat,userLng,clusters);
+    const decision=decide(userLat,userLng,clusters,cells);
     return{cells,clusters,decision,
       timestamp:new Date(Date.now()-(MAX_HIST-i)*5*60*1000).toISOString(),
       label:`${(MAX_HIST-i)*5}m ago`};
@@ -652,9 +711,13 @@ function updateAlertButton(){
 // ── RENDER ───────────────────────────────────────────────────────────────────
 const ICONS={GO:'☀️',WAIT:'🌦️',DELAY:'⛈️'};
 function hl(d){
-  if(d.state==='GO')return'Safe to go';
-  if(d.state==='WAIT')return d.minutes<999?`Rain in ${d.minutes} min`:'Rain coming';
-  return d.minutes===0?"It's raining now":`Rain in ${d.minutes} min`;
+  if(d.state==='GO')return"You're clear to go";
+  if(d.state==='WAIT'){
+    if(d.minutes===0)return'Drizzle nearby';
+    return`Rain in ${d.minutes} min`;
+  }
+  if(d.minutes===0)return'Raining at your location';
+  return`Rain arriving in ${d.minutes} min`;
 }
 
 function renderLoading(msg){
@@ -751,7 +814,7 @@ async function refresh(){
 
   const cells=radarData.cells;
   const clusters=clusterCells(cells);
-  const decision=decide(userLat,userLng,clusters);
+  const decision=decide(userLat,userLng,clusters,cells);
 
   if(liveFrame){
     historyFrames.unshift(liveFrame);

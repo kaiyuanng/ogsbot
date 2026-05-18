@@ -3,13 +3,45 @@ const { haversineKm } = require('../storm/dbscan');
 const DEFAULT_SPEED_KMH = 20;
 const DELAY_THRESHOLD_MIN = 10;
 const WAIT_THRESHOLD_MIN = 25;
+const DRIZZLE_AVG_INTENSITY = 80; // below this = light rain / drizzle
+const NEAREST_STATION_KM = 3;     // single-station drizzle check radius
+const NEAREST_STATION_MIN_I = 15; // minimum intensity for nearest-station check
 
-function makeDecision(userLat, userLng, clusters) {
-  if (clusters.length === 0) {
-    // Spec: confidence 90 when no storm nearby
-    return { state: 'GO', minutes: 999, confidence: 90, message: 'No rain nearby. Safe to go!' };
+function makeDecision(userLat, userLng, clusters, cells = []) {
+  // ── Nearest-station drizzle check ─────────────────────────────────────────
+  // Even with no cluster (e.g. only one station reporting light rain), we
+  // surface a drizzle warning if a station is within NEAREST_STATION_KM.
+  function nearestWetStation() {
+    let best = null, bestDist = Infinity;
+    for (const c of cells) {
+      if ((c.intensity ?? 0) < NEAREST_STATION_MIN_I) continue;
+      const d = haversineKm(userLat, userLng, c.lat, c.lng);
+      if (d < bestDist) { bestDist = d; best = c; }
+    }
+    return best && bestDist <= NEAREST_STATION_KM ? { station: best, dist: bestDist } : null;
   }
 
+  // ── No clusters at all ────────────────────────────────────────────────────
+  if (clusters.length === 0) {
+    const wet = nearestWetStation();
+    if (wet) {
+      const km = wet.dist.toFixed(1);
+      return {
+        state: 'WAIT',
+        minutes: 0,
+        confidence: 65,
+        message: `Light drizzle detected ${km} km from you. It may reach your location soon.`,
+      };
+    }
+    return {
+      state: 'GO',
+      minutes: 999,
+      confidence: 90,
+      message: 'No rain at your location. You\'re clear to go.',
+    };
+  }
+
+  // ── Check each cluster ────────────────────────────────────────────────────
   let minTime = Infinity;
   let nearestCluster = null;
   let weakSignalOnly = true;
@@ -17,27 +49,55 @@ function makeDecision(userLat, userLng, clusters) {
   for (const cluster of clusters) {
     const distToCenter = haversineKm(userLat, userLng, cluster.centroid.lat, cluster.centroid.lng);
     const radiusKm = cluster.radiusKm ?? 1;
+    const avgI = cluster.avgIntensity ?? 100;
+    const isDrizzle = avgI < DRIZZLE_AVG_INTENSITY;
 
-    // User inside storm footprint → immediate DELAY
+    // ── User is inside this storm ─────────────────────────────────────────
     if (distToCenter <= radiusKm) {
-      return { state: 'DELAY', minutes: 0, confidence: 80, message: "You're in the rain right now. Wait it out!" };
+      let clearingMsg = '';
+
+      if (cluster.velocity) {
+        const { dLat, dLng, speedKmh } = cluster.velocity;
+        const toUserLat = userLat - cluster.centroid.lat;
+        const toUserLng = userLng - cluster.centroid.lng;
+        const movingAway = toUserLat * dLat + toUserLng * dLng < 0;
+        if (movingAway && speedKmh > 1) {
+          // Time for storm edge to travel past user's position
+          const clearMin = Math.round((distToCenter + radiusKm) / speedKmh * 60);
+          clearingMsg = ` Rain should clear from your location in about ${clearMin} min.`;
+        }
+      }
+
+      if (isDrizzle) {
+        return {
+          state: 'DELAY',
+          minutes: 0,
+          confidence: 70,
+          message: `It's drizzling at your location right now.${clearingMsg || ' Should clear soon — keep an eye on it.'}`,
+        };
+      }
+
+      return {
+        state: 'DELAY',
+        minutes: 0,
+        confidence: 80,
+        message: `It's raining at your location right now. Wait for it to pass.${clearingMsg}`,
+      };
     }
 
-    // Distance to storm edge (not centroid) for time calculation
+    if (avgI > DRIZZLE_AVG_INTENSITY) weakSignalOnly = false;
+
+    // ── Check if this cluster is approaching ──────────────────────────────
+    let timeMin;
     const edgeDist = distToCenter - radiusKm;
 
-    if (cluster.avgIntensity > 80) weakSignalOnly = false;
-
-    let timeMin;
     if (cluster.velocity) {
       const { dLat, dLng, speedKmh } = cluster.velocity;
-      // Dot product: positive → storm moving toward user
       const toUserLat = userLat - cluster.centroid.lat;
       const toUserLng = userLng - cluster.centroid.lng;
       const approaching = toUserLat * dLat + toUserLng * dLng > 0;
       timeMin = approaching ? (edgeDist / speedKmh) * 60 : Infinity;
     } else {
-      // No prior frame — assume moving toward user at default speed
       timeMin = (edgeDist / DEFAULT_SPEED_KMH) * 60;
     }
 
@@ -47,22 +107,49 @@ function makeDecision(userLat, userLng, clusters) {
     }
   }
 
+  // ── All clusters moving away ──────────────────────────────────────────────
   if (minTime === Infinity) {
-    return { state: 'GO', minutes: 999, confidence: 80, message: 'Rain detected but moving away. Safe to go!' };
+    return {
+      state: 'GO',
+      minutes: 999,
+      confidence: 80,
+      message: 'Rain is moving away from your location. You\'re clear to go.',
+    };
   }
 
+  // ── Approaching storm ─────────────────────────────────────────────────────
   const minutes = Math.round(minTime);
-
-  // Spec: confidence 70 = weak signal, 80 = storm detected
   const confidence = weakSignalOnly ? 70 : 80;
+  const isDrizzle = nearestCluster && (nearestCluster.avgIntensity ?? 100) < DRIZZLE_AVG_INTENSITY;
 
   if (minutes < DELAY_THRESHOLD_MIN) {
-    return { state: 'DELAY', minutes, confidence, message: `Rain arrives in ~${minutes} min. Better to wait.` };
+    return {
+      state: 'DELAY',
+      minutes,
+      confidence,
+      message: isDrizzle
+        ? `Light rain is reaching your location in about ${minutes} minutes.`
+        : `Rain is reaching your location in about ${minutes} minutes. Stay covered.`,
+    };
   }
+
   if (minutes < WAIT_THRESHOLD_MIN) {
-    return { state: 'WAIT', minutes, confidence, message: `Rain expected in ~${minutes} min. Wait a bit.` };
+    return {
+      state: 'WAIT',
+      minutes,
+      confidence,
+      message: isDrizzle
+        ? `Light rain is heading your way — about ${minutes} minutes out. You may still have time.`
+        : `Rain is heading to your location — about ${minutes} minutes away. Best to wait here.`,
+    };
   }
-  return { state: 'GO', minutes, confidence, message: `Rain is ${minutes} min away. Safe to go!` };
+
+  return {
+    state: 'GO',
+    minutes,
+    confidence,
+    message: `Rain is ${minutes} minutes from your location. Plenty of time — head out now.`,
+  };
 }
 
 module.exports = { makeDecision };

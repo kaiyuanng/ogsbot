@@ -1,6 +1,6 @@
 const { dbscan, haversineKm } = require('./dbscan');
 
-const INTENSITY_THRESHOLD = 60;
+const INTENSITY_THRESHOLD = 20; // ~0.4 mm/5 min — catches light rain and drizzle
 const EPS_KM = 5;
 const MIN_SAMPLES = 2;
 

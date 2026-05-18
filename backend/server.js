@@ -68,8 +68,8 @@ app.post('/decision', (req, res) => {
     return res.status(400).json({ error: 'lat and lng are required' });
   }
 
-  const { trackedClusters, lastUpdated } = state.get();
-  const decision = makeDecision(Number(lat), Number(lng), trackedClusters);
+  const { trackedClusters, lastUpdated, frame: radarFrame } = state.get();
+  const decision = makeDecision(Number(lat), Number(lng), trackedClusters, radarFrame?.cells ?? []);
   const dataAgeSeconds = lastUpdated
     ? Math.round((Date.now() - new Date(lastUpdated)) / 1000)
     : null;
