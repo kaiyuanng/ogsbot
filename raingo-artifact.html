@@ -97,6 +97,10 @@ canvas#map{width:100%;border-radius:14px;display:block;border:1px solid rgba(255
 #dbg-btn{right:14px;cursor:pointer;color:rgba(255,255,255,.35)}
 #dbg-btn:hover{color:rgba(255,255,255,.7)}
 
+/* leaving-time strip */
+.leave-strip{background:rgba(255,255,255,.18);border:1px solid rgba(255,255,255,.25);border-radius:12px;padding:11px 22px;font-size:15px;font-weight:600;letter-spacing:-.2px;text-align:center}
+.leave-strip strong{font-size:20px}
+
 /* debug */
 #debug{position:fixed;bottom:0;left:0;right:0;background:rgba(0,0,0,.92);backdrop-filter:blur(10px);padding:12px 16px 20px;font-size:10px;font-family:'SF Mono','Fira Code',monospace;max-height:220px;overflow-y:auto;display:none;z-index:10;border-top:1px solid rgba(255,255,255,.07)}
 #debug.open{display:block}
@@ -347,13 +351,40 @@ function nearestWetStation(cells,lat,lng){
   return best&&bestDist<=NEAREST_KM?{station:best,dist:bestDist}:null;
 }
 
+// Weighted average intensity of cells within radiusKm of user
+function nearbyIntensity(cells,lat,lng,radiusKm=4){
+  let wSum=0,wCount=0;
+  for(const c of cells){
+    const d=hav(lat,lng,c.lat,c.lng);
+    if(d>radiusKm)continue;
+    const w=1/(d+0.1);
+    wSum+=(c.intensity||0)*w;
+    wCount+=w;
+  }
+  return wCount>0?wSum/wCount:0;
+}
+
+// Intensity level + trend based on current cells vs history
+function rainAnalysis(lat,lng,cells){
+  const cur=nearbyIntensity(cells,lat,lng);
+  let trend='';
+  if(historyFrames.length>=2){
+    const old=nearbyIntensity(historyFrames[Math.max(0,historyFrames.length-2)].cells,lat,lng);
+    const delta=cur-old;
+    if(delta>20)trend='heavier';
+    else if(delta<-20)trend='easing';
+  }
+  const level=cur<30?'light':cur<80?'moderate':'heavy';
+  return{cur,level,trend};
+}
+
 // Estimate drizzle clearing from intensity trend across history frames
 function drizzleClearHint(lat,lng){
   if(historyFrames.length<2)return'';
   const s0=nearestWetStation(historyFrames[0].cells,lat,lng);
   const s1=nearestWetStation(historyFrames[Math.min(1,historyFrames.length-1)].cells,lat,lng);
   if(!s0||!s1)return'';
-  const delta=s1.station.intensity-s0.station.intensity; // older minus newer
+  const delta=s1.station.intensity-s0.station.intensity;
   if(delta>30)return' Intensity easing — may clear in 5–10 min.';
   if(delta>10)return' Gradually easing — may clear in 10–15 min.';
   if(delta<-20)return' Building — could get heavier.';
@@ -383,36 +414,46 @@ function decide(lat,lng,clusters,cells=[]){
     // ── User is inside this storm ──────────────────────────────────────────
     if(distToCenter<=radiusKm){
       const b=bearingDeg(lat,lng,c.centroid.lat,c.centroid.lng);
-      let clearMsg='';
+      let clearMin=null;
       let conf=isDrizzle?70:80;
+
+      // Intensity trend
+      const analysis=cells.length?rainAnalysis(lat,lng,cells):{trend:''};
+      const trendMsg=analysis.trend==='heavier'?" It's getting heavier."
+        :analysis.trend==='easing'?" It's easing off.":'';
 
       if(c.velocity&&c.velocity.speedKmh>=SPEED_MIN){
         const{dLat,dLng,speedKmh}=c.velocity;
-        const toUserLat=lat-c.centroid.lat;
-        const toUserLng=lng-c.centroid.lng;
-        const movingAway=toUserLat*dLat+toUserLng*dLng<0;
-        if(movingAway){
-          // Time for storm edge to clear user: how far edge must travel = distToCenter + radiusKm?
-          // Actually user is at distToCenter from centroid, edge is at radiusKm.
-          // Edge must travel (radiusKm - distToCenter) more to reach user,
-          // then another radiusKm to clear — approximate as 2*(radiusKm - distToCenter/2)/speed
-          const remaining=radiusKm+distToCenter; // conservative: edge to user + user to far edge
-          const clearMin=Math.round(remaining/speedKmh*60);
-          clearMsg=` Moving away — should clear in about ${clearMin} min.`;
-          conf=Math.min(conf+5,85);
-        } else {
-          clearMsg=' Storm is stationary or moving over you.';
+        // Convert velocity to km/hr components
+        const cosLat=Math.cos(c.centroid.lat*Math.PI/180);
+        const vLatKm=dLat*111,vLngKm=dLng*111*cosLat;
+        // User offset from centroid in km
+        const uLatKm=(lat-c.centroid.lat)*111,uLngKm=(lng-c.centroid.lng)*111*cosLat;
+        // Projection of user vector onto velocity direction
+        const uParallel=(uLatKm*vLatKm+uLngKm*vLngKm)/speedKmh;
+        const d2=uLatKm*uLatKm+uLngKm*uLngKm;
+        // Exact quadratic: dist(user, centroid+t·v) = R → t=(uP+√(uP²+R²−d²))/speed
+        const disc=uParallel*uParallel+radiusKm*radiusKm-d2;
+        if(disc>=0&&speedKmh>0){
+          const t=(uParallel+Math.sqrt(disc))/speedKmh; // hours
+          if(t>=0){clearMin=Math.round(t*60);conf=Math.min(conf+5,85);}
         }
-      } else {
-        // No velocity — use history intensity trend
+      }
+
+      let clearMsg;
+      if(clearMin!==null&&clearMin>0){
+        clearMsg=` Should clear from your location in about ${clearMin} min.`;
+      }else if(clearMin===0){
+        clearMsg=' Clearing now — you can go!';
+      }else{
         const hint=drizzleClearHint(lat,lng);
         clearMsg=hint||' Keep an eye on it.';
       }
 
       const msg=isDrizzle
-        ?`It's drizzling at your location right now.${clearMsg}`
-        :`It's raining at your location right now.${clearMsg}`;
-      return{state:'DELAY',minutes:0,confidence:conf,message:msg,
+        ?`It's drizzling at your location right now.${trendMsg}${clearMsg}`
+        :`It's raining at your location right now.${trendMsg}${clearMsg}`;
+      return{state:'DELAY',minutes:0,confidence:conf,message:msg,clearMinutes:clearMin,
         storm:{bearing:b,direction:compass(b),edgeDistKm:0,radiusKm,centroid:c.centroid}};
     }
 
@@ -907,11 +948,13 @@ function updateDecisionUI(decision,clusters,source,timestamp){
 
   // Decision card
   const showNum=(decision.state==='WAIT'||decision.state==='DELAY')&&decision.minutes>0&&decision.minutes<999;
+  const showLeave=decision.state==='DELAY'&&decision.clearMinutes>0;
   document.getElementById('content').innerHTML=`
     <div class="icon">${ICONS[decision.state]??'🌫️'}</div>
     ${showNum?`<div class="big-num">${decision.minutes}</div><div class="big-unit">minutes</div>`:''}
     <div class="headline">${hl(decision)}</div>
     <div class="sub">${decision.message}</div>
+    ${showLeave?`<div class="leave-strip">You can leave in about <strong>${decision.clearMinutes} min</strong></div>`:''}
     <div class="conf-pill">
       <span class="cdot ${decision.confidence>=80?'hi':'lo'}"></span>
       ${decision.confidence}% confidence

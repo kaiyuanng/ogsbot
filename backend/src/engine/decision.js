@@ -54,17 +54,29 @@ function makeDecision(userLat, userLng, clusters, cells = []) {
 
     // ── User is inside this storm ─────────────────────────────────────────
     if (distToCenter <= radiusKm) {
+      let clearMinutes = null;
       let clearingMsg = '';
 
-      if (cluster.velocity) {
+      if (cluster.velocity && cluster.velocity.speedKmh > 1) {
         const { dLat, dLng, speedKmh } = cluster.velocity;
-        const toUserLat = userLat - cluster.centroid.lat;
-        const toUserLng = userLng - cluster.centroid.lng;
-        const movingAway = toUserLat * dLat + toUserLng * dLng < 0;
-        if (movingAway && speedKmh > 1) {
-          // Time for storm edge to travel past user's position
-          const clearMin = Math.round((distToCenter + radiusKm) / speedKmh * 60);
-          clearingMsg = ` Rain should clear from your location in about ${clearMin} min.`;
+        // Convert velocity to km/hr components
+        const cosLat = Math.cos(cluster.centroid.lat * Math.PI / 180);
+        const vLatKm = dLat * 111;
+        const vLngKm = dLng * 111 * cosLat;
+        // User offset from centroid in km
+        const uLatKm = (userLat - cluster.centroid.lat) * 111;
+        const uLngKm = (userLng - cluster.centroid.lng) * 111 * cosLat;
+        // Projection of user-from-centroid vector onto velocity direction
+        const uParallel = (uLatKm * vLatKm + uLngKm * vLngKm) / speedKmh;
+        const d2 = uLatKm * uLatKm + uLngKm * uLngKm;
+        // Exact quadratic: dist(user, centroid + t·v) = R → t = (uP + √(uP² + R² − d²)) / speed
+        const disc = uParallel * uParallel + radiusKm * radiusKm - d2;
+        if (disc >= 0) {
+          const t = (uParallel + Math.sqrt(disc)) / speedKmh; // hours
+          if (t >= 0) {
+            clearMinutes = Math.round(t * 60);
+            clearingMsg = ` You can leave in about ${clearMinutes} min.`;
+          }
         }
       }
 
@@ -73,6 +85,7 @@ function makeDecision(userLat, userLng, clusters, cells = []) {
           state: 'DELAY',
           minutes: 0,
           confidence: 70,
+          clearMinutes,
           message: `It's drizzling at your location right now.${clearingMsg || ' Should clear soon — keep an eye on it.'}`,
         };
       }
@@ -81,7 +94,8 @@ function makeDecision(userLat, userLng, clusters, cells = []) {
         state: 'DELAY',
         minutes: 0,
         confidence: 80,
-        message: `It's raining at your location right now. Wait for it to pass.${clearingMsg}`,
+        clearMinutes,
+        message: `It's raining at your location right now.${clearingMsg || ' Wait for it to pass.'}`,
       };
     }
 

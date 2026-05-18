@@ -6,6 +6,7 @@ struct DecisionResponse: Decodable {
     let confidence: Int
     let message: String
     let dataAgeSeconds: Int?
+    let clearMinutes: Int?  // minutes until rain clears from user's location (DELAY only)
 }
 
 enum RainState {

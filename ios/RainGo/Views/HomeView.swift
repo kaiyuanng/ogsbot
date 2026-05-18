@@ -219,6 +219,20 @@ private struct DecisionView: View {
                 .multilineTextAlignment(.center)
                 .padding(.horizontal, 40)
 
+            if let clearMin = decision.clearMinutes, clearMin > 0 {
+                HStack(spacing: 6) {
+                    Image(systemName: "timer")
+                        .font(.system(size: 14, weight: .medium))
+                    Text("You can leave in about \(clearMin) min")
+                        .font(.system(size: 15, weight: .semibold))
+                }
+                .foregroundColor(.white)
+                .padding(.horizontal, 20)
+                .padding(.vertical, 11)
+                .background(Color.white.opacity(0.18), in: RoundedRectangle(cornerRadius: 12))
+                .overlay(RoundedRectangle(cornerRadius: 12).stroke(Color.white.opacity(0.25), lineWidth: 1))
+            }
+
             HStack(spacing: 6) {
                 Circle()
                     .fill(confidenceColor)
