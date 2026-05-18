@@ -172,8 +172,10 @@ const NEA_URL     = 'https://api.data.gov.sg/v1/environment/rainfall';
 const GEO_URL     = 'https://nominatim.openstreetmap.org/reverse';
 const MAX_MM=5,I_THRESH=20,EPS_KM=5,MIN_PTS=2,DEF_SPEED=20,DELAY_T=10,WAIT_T=25;
 const DRIZZLE_AVG_I=80;   // below this = drizzle / light rain
-const NEAREST_KM=3;       // nearest-station check radius (km)
+const NEAREST_KM=5;       // nearest-station check radius — 5km covers sparse areas like Kallang
 const NEAREST_MIN_I=15;   // minimum intensity for nearest-station check
+const MAX_MATCH_KM=20;    // max centroid displacement between frames for velocity matching
+const SPEED_MIN=2,SPEED_MAX=60; // plausible storm speed bounds (km/h)
 const MAX_HIST=6;
 const REFRESH_INTERVAL = 5 * 60; // seconds
 
@@ -279,15 +281,55 @@ function dbscan(pts,eps,min){
   return out;
 }
 function clusterCells(cells){
-  const active=cells.filter(c=>c.intensity>I_THRESH);
-  if(!active.length)return[];
-  return dbscan(active,EPS_KM,MIN_PTS).map(pts=>{
-    const lat=pts.reduce((s,p)=>s+p.lat,0)/pts.length;
-    const lng=pts.reduce((s,p)=>s+p.lng,0)/pts.length;
-    const maxI=Math.max(...pts.map(p=>p.intensity));
-    const avgI=pts.reduce((s,p)=>s+p.intensity,0)/pts.length;
-    const radiusKm=Math.max(1,...pts.map(p=>hav(lat,lng,p.lat,p.lng)));
-    return{centroid:{lat,lng},points:pts,maxI,avgI,radiusKm};
+  // Pass 1 — moderate/heavy rain (intensity>60): eps=5km
+  const heavy=cells.filter(c=>c.intensity>60);
+  const heavyClusters=heavy.length>=MIN_PTS
+    ?dbscan(heavy,EPS_KM,MIN_PTS).map(pts=>buildCluster(pts))
+    :[];
+  const heavyIds=new Set(heavyClusters.flatMap(c=>c.points.map(p=>p.lat+','+p.lng)));
+
+  // Pass 2 — light rain (intensity 20-60): eps=3km, only cells not already clustered
+  const light=cells.filter(c=>c.intensity>I_THRESH&&c.intensity<=60&&!heavyIds.has(c.lat+','+c.lng));
+  const lightClusters=light.length>=MIN_PTS
+    ?dbscan(light,3,MIN_PTS).map(pts=>buildCluster(pts))
+    :[];
+
+  return [...heavyClusters,...lightClusters];
+}
+function buildCluster(pts){
+  const lat=pts.reduce((s,p)=>s+p.lat,0)/pts.length;
+  const lng=pts.reduce((s,p)=>s+p.lng,0)/pts.length;
+  const maxI=Math.max(...pts.map(p=>p.intensity));
+  const avgI=pts.reduce((s,p)=>s+p.intensity,0)/pts.length;
+  const radiusKm=Math.max(1,...pts.map(p=>hav(lat,lng,p.lat,p.lng)));
+  return{centroid:{lat,lng},points:pts,maxI,avgI,radiusKm,velocity:null};
+}
+// Match current clusters to previous frame clusters and compute velocity vectors.
+// dLat/dLng are in deg/hr; speedKmh is the magnitude.
+function computeVelocity(currClusters,prevClusters,intervalMin){
+  if(!prevClusters||!prevClusters.length||intervalMin<=0)return currClusters;
+  const LAT_KM=111.0;
+  const LNG_KM=111.32*Math.cos(1.35*Math.PI/180); // ~111.0*cos(1.35°) ≈ 111.0
+  const intervalHr=intervalMin/60;
+
+  return currClusters.map(curr=>{
+    let best=null,bestDist=Infinity;
+    for(const prev of prevClusters){
+      const d=hav(curr.centroid.lat,curr.centroid.lng,prev.centroid.lat,prev.centroid.lng);
+      if(d<bestDist){bestDist=d;best=prev;}
+    }
+    if(!best||bestDist>MAX_MATCH_KM)return{...curr,velocity:null};
+
+    const dLat=(curr.centroid.lat-best.centroid.lat)/intervalHr; // deg/hr
+    const dLng=(curr.centroid.lng-best.centroid.lng)/intervalHr; // deg/hr
+    const dLatKm=dLat*LAT_KM;
+    const dLngKm=dLng*LNG_KM;
+    const speedKmh=Math.sqrt(dLatKm*dLatKm+dLngKm*dLngKm);
+
+    // Sanity-check: implausible speeds → no velocity (sensor noise or cluster jump)
+    if(speedKmh>SPEED_MAX)return{...curr,velocity:null};
+
+    return{...curr,velocity:{dLat,dLng,speedKmh}};
   });
 }
 // Find the closest station within NEAREST_KM reporting intensity > NEAREST_MIN_I
@@ -315,7 +357,7 @@ function drizzleClearHint(lat,lng){
 }
 
 function decide(lat,lng,clusters,cells=[]){
-  // No clusters — run nearest-station drizzle check
+  // ── No clusters — nearest-station drizzle check ──────────────────────────
   if(!clusters.length){
     const wet=nearestWetStation(cells,lat,lng);
     if(wet){
@@ -327,50 +369,107 @@ function decide(lat,lng,clusters,cells=[]){
       message:"No rain at your location. You're clear to go.",storm:null};
   }
 
-  let minT=Infinity,best=null,weak=true;
+  let minT=Infinity,best=null,hasGoodVelocity=false;
 
   for(const c of clusters){
-    const d=hav(lat,lng,c.centroid.lat,c.centroid.lng);
+    const distToCenter=hav(lat,lng,c.centroid.lat,c.centroid.lng);
+    const radiusKm=c.radiusKm||1;
     const isDrizzle=(c.avgI||100)<DRIZZLE_AVG_I;
 
-    // User is inside this storm
-    if(d<=c.radiusKm){
+    // ── User is inside this storm ──────────────────────────────────────────
+    if(distToCenter<=radiusKm){
       const b=bearingDeg(lat,lng,c.centroid.lat,c.centroid.lng);
-      const hint=drizzleClearHint(lat,lng);
+      let clearMsg='';
+      let conf=isDrizzle?70:80;
+
+      if(c.velocity&&c.velocity.speedKmh>=SPEED_MIN){
+        const{dLat,dLng,speedKmh}=c.velocity;
+        const toUserLat=lat-c.centroid.lat;
+        const toUserLng=lng-c.centroid.lng;
+        const movingAway=toUserLat*dLat+toUserLng*dLng<0;
+        if(movingAway){
+          // Time for storm edge to clear user: how far edge must travel = distToCenter + radiusKm?
+          // Actually user is at distToCenter from centroid, edge is at radiusKm.
+          // Edge must travel (radiusKm - distToCenter) more to reach user,
+          // then another radiusKm to clear — approximate as 2*(radiusKm - distToCenter/2)/speed
+          const remaining=radiusKm+distToCenter; // conservative: edge to user + user to far edge
+          const clearMin=Math.round(remaining/speedKmh*60);
+          clearMsg=` Moving away — should clear in about ${clearMin} min.`;
+          conf=Math.min(conf+5,85);
+        } else {
+          clearMsg=' Storm is stationary or moving over you.';
+        }
+      } else {
+        // No velocity — use history intensity trend
+        const hint=drizzleClearHint(lat,lng);
+        clearMsg=hint||' Keep an eye on it.';
+      }
+
       const msg=isDrizzle
-        ?`It's drizzling at your location right now.${hint||' Should clear soon — keep an eye on it.'}`
-        :`It's raining at your location right now. Wait for it to pass.${hint}`;
-      return{state:'DELAY',minutes:0,confidence:isDrizzle?70:80,message:msg,
-        storm:{bearing:b,direction:compass(b),edgeDistKm:0,radiusKm:c.radiusKm,centroid:c.centroid}};
+        ?`It's drizzling at your location right now.${clearMsg}`
+        :`It's raining at your location right now.${clearMsg}`;
+      return{state:'DELAY',minutes:0,confidence:conf,message:msg,
+        storm:{bearing:b,direction:compass(b),edgeDistKm:0,radiusKm,centroid:c.centroid}};
     }
 
-    if((c.avgI||100)>DRIZZLE_AVG_I)weak=false;
-    const t=((d-c.radiusKm)/DEF_SPEED)*60;
-    if(t<minT){minT=t;best=c;}
+    // ── Storm outside — check if approaching ──────────────────────────────
+    const edgeDist=distToCenter-radiusKm;
+
+    let timeMin;
+    if(c.velocity&&c.velocity.speedKmh>=SPEED_MIN){
+      const{dLat,dLng,speedKmh}=c.velocity;
+      const toUserLat=lat-c.centroid.lat;
+      const toUserLng=lng-c.centroid.lng;
+      // Dot product > 0 → storm centroid moving toward user
+      const approaching=toUserLat*dLat+toUserLng*dLng>0;
+      if(!approaching){timeMin=Infinity;continue;} // confirmed moving away — skip
+      // Use measured speed, clamped to plausible range
+      const speed=Math.max(SPEED_MIN,Math.min(speedKmh,SPEED_MAX));
+      timeMin=(edgeDist/speed)*60;
+      hasGoodVelocity=true;
+    }else{
+      // No velocity yet (first frame) — assume approaching at default speed (conservative)
+      timeMin=(edgeDist/DEF_SPEED)*60;
+    }
+
+    if(timeMin<minT){minT=timeMin;best=c;}
   }
 
-  // All clusters moving away
-  if(minT===Infinity||!best)
-    return{state:'GO',minutes:999,confidence:80,
+  // ── All clusters confirmed moving away ────────────────────────────────────
+  if(minT===Infinity||!best){
+    return{state:'GO',minutes:999,confidence:hasGoodVelocity?85:80,
       message:"Rain is moving away from your location. You're clear to go.",storm:null};
+  }
 
-  const m=Math.round(minT),conf=weak?70:80;
+  // ── Approaching storm ─────────────────────────────────────────────────────
+  const m=Math.round(minT);
   const isDrizzle=(best.avgI||100)<DRIZZLE_AVG_I;
+  // Confidence: velocity-tracked > default speed assumption; drizzle capped lower
+  let conf=hasGoodVelocity?82:70;
+  if(isDrizzle)conf=Math.min(conf,70);
+
+  // Uncertainty range for message (±20% of time estimate, minimum ±3 min)
+  const uncertainty=Math.max(3,Math.round(m*0.2));
+  const rangeStr=hasGoodVelocity?` (${Math.max(1,m-uncertainty)}–${m+uncertainty} min range)`:' (estimated)';
+
   const b=bearingDeg(lat,lng,best.centroid.lat,best.centroid.lng);
-  const storm={bearing:b,direction:compass(b),
+  const storm={
+    bearing:b,direction:compass(b),
     edgeDistKm:+(hav(lat,lng,best.centroid.lat,best.centroid.lng)-best.radiusKm).toFixed(1),
-    radiusKm:best.radiusKm,centroid:best.centroid};
+    radiusKm:best.radiusKm,centroid:best.centroid,
+    speedKmh:best.velocity?.speedKmh??DEF_SPEED,
+  };
 
   if(m<DELAY_T)return{state:'DELAY',minutes:m,confidence:conf,storm,
     message:isDrizzle
-      ?`Light rain is reaching your location in about ${m} minutes.`
-      :`Rain is reaching your location in about ${m} minutes. Stay covered.`};
+      ?`Light rain reaching your location in about ${m} min${rangeStr}.`
+      :`Rain reaching your location in about ${m} min${rangeStr}. Stay covered.`};
   if(m<WAIT_T)return{state:'WAIT',minutes:m,confidence:conf,storm,
     message:isDrizzle
-      ?`Light rain is heading your way — about ${m} minutes out. You may still have time.`
-      :`Rain is heading to your location — about ${m} minutes away. Best to wait here.`};
+      ?`Light rain heading your way — about ${m} min out${rangeStr}.`
+      :`Rain heading to your location — about ${m} min away${rangeStr}. Best to wait here.`};
   return{state:'GO',minutes:m,confidence:conf,storm,
-    message:`Rain is ${m} minutes from your location. Plenty of time — head out now.`};
+    message:`Rain is ${m} min from your location${rangeStr}. Head out now.`};
 }
 
 // ── DATA FETCH ──────────────────────────────────────────────────────────────
@@ -427,15 +526,21 @@ function mockCells(){
   ];
 }
 function buildMockHistory(baseCells){
-  return Array.from({length:MAX_HIST},(_,i)=>{
-    const offset=(MAX_HIST-i)*0.013;
+  // Build oldest→newest so velocity can be computed between adjacent frames
+  const frames=[];
+  let prevClusters=[];
+  for(let i=MAX_HIST;i>=1;i--){
+    const offset=i*0.013; // storm progressively further north in older frames
     const cells=baseCells.map(c=>c.intensity>I_THRESH?{...c,lat:c.lat+offset}:c);
-    const clusters=clusterCells(cells);
+    const rawClusters=clusterCells(cells);
+    const clusters=prevClusters.length?computeVelocity(rawClusters,prevClusters,5):rawClusters;
     const decision=decide(userLat,userLng,clusters,cells);
-    return{cells,clusters,decision,
-      timestamp:new Date(Date.now()-(MAX_HIST-i)*5*60*1000).toISOString(),
-      label:`${(MAX_HIST-i)*5}m ago`};
-  });
+    frames.unshift({cells,clusters,decision,
+      timestamp:new Date(Date.now()-i*5*60*1000).toISOString(),
+      label:`${i*5}m ago`});
+    prevClusters=rawClusters;
+  }
+  return frames;
 }
 
 // ── CANVAS DRAWING ───────────────────────────────────────────────────────────
@@ -501,6 +606,36 @@ function drawStormCluster(ctx,c,W,H,pulse){
   ctx.fillStyle='rgba(255,160,140,0.92)';ctx.beginPath();ctx.arc(cx,cy,3,0,Math.PI*2);ctx.fill();
 }
 
+// Draw a dashed arrow showing storm projected path (15-min lookahead)
+function drawVelocityArrow(ctx,c,W,H){
+  if(!c.velocity||c.velocity.speedKmh<SPEED_MIN)return;
+  const[cx,cy]=toXY(c.centroid.lat,c.centroid.lng,W,H);
+  const LAT_KM=111.0,LNG_KM=111.32*Math.cos(1.35*Math.PI/180);
+  // Project centroid 15 minutes forward
+  const hr=0.25;
+  const projLat=c.centroid.lat+c.velocity.dLat*hr;
+  const projLng=c.centroid.lng+c.velocity.dLng*hr;
+  const[px,py]=toXY(projLat,projLng,W,H);
+  const dx=px-cx,dy=py-cy,mag=Math.sqrt(dx*dx+dy*dy);
+  if(mag<8)return;
+  const nx=dx/mag,ny=dy/mag;
+
+  ctx.save();
+  // Shaft
+  ctx.setLineDash([5,4]);
+  ctx.strokeStyle='rgba(255,210,80,0.55)';
+  ctx.lineWidth=1.5;
+  ctx.beginPath();ctx.moveTo(cx,cy);ctx.lineTo(px-nx*7,py-ny*7);ctx.stroke();
+  // Arrowhead
+  ctx.setLineDash([]);
+  ctx.fillStyle='rgba(255,210,80,0.75)';
+  ctx.beginPath();
+  ctx.moveTo(px,py);
+  ctx.lineTo(px-nx*9-ny*5,py-ny*9+nx*5);
+  ctx.lineTo(px-nx*9+ny*5,py-ny*9-nx*5);
+  ctx.closePath();ctx.fill();
+  ctx.restore();
+}
 function drawMap(frame,uLat,uLng,pulse){
   const canvas=document.getElementById('map');
   const dpr=window.devicePixelRatio||1;
@@ -531,6 +666,7 @@ function drawMap(frame,uLat,uLng,pulse){
 
   // Storm cluster glows
   for(const c of frame.clusters)drawStormCluster(ctx,c,W,H,pulse);
+  for(const c of frame.clusters)drawVelocityArrow(ctx,c,W,H);
 
   // User location dot
   const[ux,uy]=toXY(uLat,uLng,W,H);
@@ -813,8 +949,18 @@ async function refresh(){
   document.getElementById('loc-text').textContent=locationLabel;
 
   const cells=radarData.cells;
-  const clusters=clusterCells(cells);
-  const decision=decide(userLat,userLng,clusters,cells);
+  const rawClusters=clusterCells(cells);
+  // Compute velocity by matching against previous live frame's clusters
+  const prevClusters=liveFrame?.clusters??[];
+  const intervalMin=liveFrame
+    ?Math.max(1,Math.round((Date.now()-new Date(liveFrame.timestamp))/60000))
+    :5;
+  const clusters=computeVelocity(rawClusters,prevClusters,intervalMin);
+  let decision=decide(userLat,userLng,clusters,cells);
+  // "Rain cleared" transition: override message when DELAY→GO
+  if(prevState==='DELAY'&&decision.state==='GO'){
+    decision={...decision,message:"Rain has just cleared from your location. You're good to go."};
+  }
 
   if(liveFrame){
     historyFrames.unshift(liveFrame);
