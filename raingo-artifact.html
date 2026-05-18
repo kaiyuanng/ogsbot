@@ -170,6 +170,10 @@ const DEFAULT_LAT = 1.2657294;
 const DEFAULT_LNG = 103.8227098;
 const NEA_URL     = 'https://api.data.gov.sg/v1/environment/rainfall';
 const GEO_URL     = 'https://nominatim.openstreetmap.org/reverse';
+// Set to your running backend URL for full 480×480 radar grid (920m resolution).
+// Leave empty to fall back to the 66-station NEA gauge network only.
+// e.g. 'http://192.168.1.42:3000'  or  'https://raingo.up.railway.app'
+const BACKEND_URL = '';
 const MAX_MM=5,I_THRESH=20,EPS_KM=5,MIN_PTS=2,DEF_SPEED=20,DELAY_T=10,WAIT_T=25;
 const DRIZZLE_AVG_I=80;   // below this = drizzle / light rain
 const NEAREST_KM=5;       // nearest-station check radius — 5km covers sparse areas like Kallang
@@ -474,6 +478,18 @@ function decide(lat,lng,clusters,cells=[]){
 
 // ── DATA FETCH ──────────────────────────────────────────────────────────────
 async function fetchData(){
+  // 1. Backend radar-cells endpoint — full 480×480 NEA radar PNG grid (~920m resolution)
+  if(BACKEND_URL){
+    try{
+      const r=await fetch(`${BACKEND_URL}/radar-cells`,{signal:AbortSignal.timeout(6000)});
+      if(r.ok){
+        const j=await r.json();
+        if(j.cells?.length>0)return{cells:j.cells,source:'radar',timestamp:j.timestamp??new Date().toISOString()};
+      }
+    }catch{}
+  }
+
+  // 2. NEA station gauge API — ~66 point sensors, CORS-accessible from browser
   try{
     const r=await fetch(NEA_URL,{signal:AbortSignal.timeout(8000)});
     if(!r.ok)throw 0;
@@ -486,7 +502,10 @@ async function fetchData(){
     for(const rd of(items[0]?.readings??[]))
       if(map[rd.station_id])map[rd.station_id].intensity=Math.min(255,Math.round((rd.value/MAX_MM)*255));
     return{cells:Object.values(map),source:'live',timestamp:ts};
-  }catch{return{cells:mockCells(),source:'mock',timestamp:new Date().toISOString()};}
+  }catch{}
+
+  // 3. Mock data fallback
+  return{cells:mockCells(),source:'mock',timestamp:new Date().toISOString()};
 }
 async function getLocation(){
   return new Promise(resolve=>{
@@ -877,8 +896,10 @@ function updateDecisionUI(decision,clusters,source,timestamp){
 
   // Source badge
   const sb=document.getElementById('src-badge');
-  sb.textContent=source==='live'?'NEA LIVE':'NEA DEMO';
-  sb.style.color=source==='live'?'rgba(122,226,140,.85)':'rgba(255,209,102,.75)';
+  const badgeMap={radar:'NEA RADAR',live:'NEA STATIONS',mock:'NEA DEMO'};
+  const colorMap={radar:'rgba(122,226,140,.85)',live:'rgba(122,226,140,.85)',mock:'rgba(255,209,102,.75)'};
+  sb.textContent=badgeMap[source]??'NEA';
+  sb.style.color=colorMap[source]??'rgba(255,255,255,.5)';
 
   // Flash if state changed
   if(prevState&&prevState!==decision.state)triggerFlash();

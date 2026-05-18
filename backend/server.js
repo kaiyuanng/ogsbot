@@ -62,6 +62,14 @@ setInterval(refreshRadar, POLL_INTERVAL_MS);
 
 // ── Routes ─────────────────────────────────────────────────────────────────
 
+// Full radar grid cells — HTML artifact fetches this for 920m-resolution
+// coverage instead of relying on the sparse 66-station gauge network.
+app.get('/radar-cells', (_req, res) => {
+  const { frame, lastUpdated } = state.get();
+  if (!frame) return res.status(503).json({ error: 'Radar not ready yet — try again in 30s' });
+  res.json({ cells: frame.cells, timestamp: frame.timestamp, source: frame.source });
+});
+
 app.post('/decision', (req, res) => {
   const { lat, lng } = req.body ?? {};
   if (lat == null || lng == null) {

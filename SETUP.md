@@ -48,9 +48,9 @@ You'll get something like `192.168.1.42`. **Write this down.**
 
 ---
 
-### Step 3 — Set the API URL in the app
+### Step 3 — Set the API URL in the app and HTML artifact
 
-Open `ios/RainGo/Config.swift` in any text editor and change line 18:
+**iOS app** — open `ios/RainGo/Config.swift` and change line 18:
 
 ```swift
 // Change this:
@@ -61,6 +61,18 @@ return "http://192.168.1.42:3000"
 ```
 
 Save the file.
+
+**HTML artifact** — open `raingo-artifact.html` in any text editor and set `BACKEND_URL` near the top of the `<script>` block:
+
+```javascript
+// Change this:
+const BACKEND_URL = '';
+
+// To this (use YOUR IP from Step 2):
+const BACKEND_URL = 'http://192.168.1.42:3000';
+```
+
+This gives the HTML artifact full NEA radar coverage (480×480 grid, ~920m resolution) instead of the sparse 66-station gauge network. Rain at locations like French Road or Kallang that fall between gauges will now be detected.
 
 > **Your iPhone and Mac must be on the same WiFi network.** Mobile data will not reach localhost.
 
